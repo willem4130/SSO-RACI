@@ -1,0 +1,336 @@
+// RACI Matrix Application - Database Schema
+// Multi-tenant architecture with Organization → Project → Matrix hierarchy
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USERS
+// ============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   Member[]
+}
+
+// ============================================================================
+// MULTI-TENANT CORE
+// ============================================================================
+
+model Organization {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String    @unique
+  ownerId    String
+  settings   String?   // JSON string for SQLite (locale, timezone, features)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  members       Member[]
+  departments   Department[]
+  projects      Project[]
+  matrices      RACIMatrix[]
+  templates     Template[]
+  auditLogs     AuditLog[]
+  activityLogs  ActivityLog[]
+
+  @@index([slug])
+  @@index([ownerId])
+}
+
+model Member {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email          String
+  name           String
+  role           String       @default("MEMBER") // OWNER, ADMIN, MEMBER, VIEWER
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  joinedAt       DateTime     @default(now())
+  invitedBy      String?
+  status         String       @default("ACTIVE") // ACTIVE, INVITED, SUSPENDED
+
+  assignments     Assignment[]
+  ownedProjects   Project[]
+  createdMatrices RACIMatrix[]
+  comments        Comment[]
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, role])
+  @@index([departmentId])
+}
+
+model Department {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  code           String
+  parentId       String?
+  parent         Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children       Department[] @relation("DepartmentHierarchy")
+  orderSort      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  archivedAt     DateTime?
+
+  members  Member[]
+  projects Project[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, parentId])
+}
+
+// ============================================================================
+// PROJECT & RACI MATRIX
+// ============================================================================
+
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  departmentId   String?
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  name           String
+  description    String?
+  ownerId        String
+  owner          Member       @relation(fields: [ownerId], references: [id])
+  status         String       @default("ACTIVE") // ACTIVE, ARCHIVED, COMPLETED, ON_HOLD
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  archivedAt     DateTime?
+  deletedAt      DateTime?
+
+  matrices RACIMatrix[]
+
+  @@index([organizationId, status])
+  @@index([departmentId])
+  @@index([ownerId])
+}
+
+model RACIMatrix {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  templateId     String?
+  template       Template?    @relation(fields: [templateId], references: [id])
+  createdById    String
+  createdBy      Member       @relation(fields: [createdById], references: [id])
+  version        Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  archivedAt     DateTime?
+  deletedAt      DateTime?
+
+  tasks      Task[]
+  shares     Share[]
+  comments   Comment[]
+  snapshots  MatrixSnapshot[]
+
+  @@index([organizationId, projectId])
+  @@index([templateId])
+  @@index([createdById])
+}
+
+// ============================================================================
+// TASKS & ASSIGNMENTS
+// ============================================================================
+
+model Task {
+  id             String      @id @default(cuid())
+  matrixId       String
+  matrix         RACIMatrix  @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  parentTaskId   String?
+  parent         Task?       @relation("TaskHierarchy", fields: [parentTaskId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children       Task[]      @relation("TaskHierarchy")
+  orderIndex     Int
+  status         String      @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, COMPLETED, BLOCKED, ON_HOLD
+  priority       String      @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  dueDate        DateTime?
+  completedAt    DateTime?
+  estimatedHours Float?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  archivedAt     DateTime?
+
+  assignments Assignment[]
+  comments    Comment[]
+
+  @@index([matrixId, orderIndex])
+  @@index([parentTaskId])
+}
+
+model Assignment {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  raciRole   String   // RESPONSIBLE, ACCOUNTABLE, CONSULTED, INFORMED
+  assignedBy String
+  assignedAt DateTime @default(now())
+  notes      String?
+  workload   Float?   // Estimated percentage of capacity
+
+  @@unique([taskId, memberId, raciRole])
+  @@index([memberId])
+  @@index([taskId])
+}
+
+// ============================================================================
+// TEMPLATES
+// ============================================================================
+
+model Template {
+  id               String        @id @default(cuid())
+  organizationId   String?       // null = global template
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name             String
+  description      String?
+  category         String
+  industry         String
+  language         String        @default("en")
+  isPublic         Boolean       @default(false)
+  usageCount       Int           @default(0)
+  structure        String        // JSON string: Task hierarchy + default assignments
+  createdById      String
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  version          Int           @default(1)
+  parentTemplateId String?
+
+  matrices RACIMatrix[]
+
+  @@index([organizationId, category])
+  @@index([isPublic, category])
+}
+
+// ============================================================================
+// SHARING & COLLABORATION
+// ============================================================================
+
+model Share {
+  id             String      @id @default(cuid())
+  matrixId       String
+  matrix         RACIMatrix  @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  sharedBy       String
+  sharedWith     String?     // null = public link
+  accessLevel    String      // VIEW, COMMENT, EDIT
+  shareToken     String?     @unique
+  expiresAt      DateTime?
+  createdAt      DateTime    @default(now())
+  lastAccessedAt DateTime?
+
+  @@index([matrixId])
+  @@index([shareToken])
+}
+
+model Comment {
+  id        String      @id @default(cuid())
+  matrixId  String?
+  matrix    RACIMatrix? @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    Member      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  content   String
+  mentions  String?     // JSON array of member IDs
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+
+  @@index([matrixId, createdAt])
+  @@index([taskId, createdAt])
+  @@index([authorId])
+}
+
+// ============================================================================
+// VERSION HISTORY & AUDIT
+// ============================================================================
+
+model MatrixSnapshot {
+  id        String      @id @default(cuid())
+  matrixId  String
+  matrix    RACIMatrix  @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  version   Int
+  data      String      // JSON string: Full matrix state
+  createdBy String
+  createdAt DateTime    @default(now())
+
+  @@unique([matrixId, version])
+  @@index([matrixId])
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  resourceType   String
+  resourceId     String
+  action         String       // CREATED, UPDATED, DELETED, SHARED, RESTORED, EXPORTED
+  changes        String?      // JSON string
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime     @default(now())
+
+  @@index([organizationId, timestamp])
+  @@index([resourceType, resourceId])
+}
+
+model ActivityLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  matrixId       String?
+  userId         String
+  action         String
+  targetUser     String?
+  metadata       String?      // JSON string
+  createdAt      DateTime     @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([userId, createdAt])
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String    // ASSIGNMENT, MENTION, COMMENT, SHARE, DEADLINE, CONFLICT
+  title     String
+  message   String
+  link      String?
+  read      Boolean   @default(false)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  @@index([userId, read, createdAt])
+}
