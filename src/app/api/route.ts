@@ -8,7 +8,7 @@ import { apiResponse } from '@/lib/api-middleware'
  */
 export async function GET(request: NextRequest) {
   return apiResponse({
-    name: 'Iconic Website API',
+    name: 'RACI Matrix API',
     version: '1.0.0',
     documentation: {
       endpoints: {

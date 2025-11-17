@@ -8,8 +8,8 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Iconic Website',
-  description: 'A modern Next.js application with tRPC, Prisma, and shadcn/ui',
+  title: 'RACI Matrix - Collaborative Role Management',
+  description: 'Professional RACI matrix application with real-time collaboration, validation, and analytics for managing project responsibilities',
 }
 
 export default function RootLayout({

@@ -38,7 +38,7 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="grid gap-2">
               <Label htmlFor="siteName">Site Name</Label>
-              <Input id="siteName" placeholder="Enter site name" defaultValue="Iconic Website" />
+              <Input id="siteName" placeholder="Enter site name" defaultValue="RACI Matrix" />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="siteUrl">Site URL</Label>
