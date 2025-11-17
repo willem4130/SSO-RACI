@@ -13,6 +13,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MemberList } from '@/components/members/MemberList';
+import { OrganizationSettings } from '@/components/settings/OrganizationSettings';
 
 export default function OrganizationPage() {
   const params = useParams();
@@ -91,6 +93,7 @@ export default function OrganizationPage() {
           <TabsTrigger value="projects">Projects</TabsTrigger>
           <TabsTrigger value="matrices">All Matrices</TabsTrigger>
           <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects" className="space-y-4">
@@ -190,20 +193,11 @@ export default function OrganizationPage() {
         </TabsContent>
 
         <TabsContent value="members" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold">Members</h2>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Invite Member
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="py-8">
-              <p className="text-center text-muted-foreground">
-                Member management coming soon
-              </p>
-            </CardContent>
-          </Card>
+          <MemberList organizationId={orgId} />
+        </TabsContent>
+
+        <TabsContent value="settings" className="space-y-4">
+          <OrganizationSettings organizationId={orgId} />
         </TabsContent>
       </Tabs>
     </div>

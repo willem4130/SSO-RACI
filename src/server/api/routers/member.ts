@@ -153,4 +153,141 @@ export const memberRouter = createTRPCRouter({
 
       return { success: true };
     }),
+
+  // Invite member by email
+  invite: protectedProcedure
+    .input(
+      z.object({
+        organizationId: z.string(),
+        email: z.string().email(),
+        role: z.enum(['ADMIN', 'MEMBER', 'VIEWER']),
+        departmentId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      // Check permission
+      const hasPermission = await ctx.db.member.findFirst({
+        where: {
+          organizationId: input.organizationId,
+          userId: ctx.session.user.id,
+          role: { in: ['OWNER', 'ADMIN'] },
+        },
+      });
+
+      if (!hasPermission) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
+      // Check if user already exists
+      const existingUser = await ctx.db.user.findUnique({
+        where: { email: input.email },
+      });
+
+      // Check if member already exists in organization
+      if (existingUser) {
+        const existingMember = await ctx.db.member.findUnique({
+          where: {
+            organizationId_userId: {
+              organizationId: input.organizationId,
+              userId: existingUser.id,
+            },
+          },
+        });
+
+        if (existingMember) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'User is already a member of this organization',
+          });
+        }
+
+        // Add existing user to organization
+        return await ctx.db.member.create({
+          data: {
+            organizationId: input.organizationId,
+            userId: existingUser.id,
+            email: input.email,
+            name: existingUser.name ?? input.email,
+            role: input.role,
+            departmentId: input.departmentId,
+            status: 'ACTIVE',
+            invitedBy: ctx.session.user.id,
+          },
+          include: {
+            user: { select: { name: true, email: true } },
+            department: true,
+          },
+        });
+      }
+
+      // User doesn't exist - create invitation
+      // In a real app, you'd send an email here
+      // For now, create a placeholder user account
+      const newUser = await ctx.db.user.create({
+        data: {
+          email: input.email,
+          name: input.email.split('@')[0],
+          password: 'INVITED', // Placeholder - user will set password on signup
+        },
+      });
+
+      const member = await ctx.db.member.create({
+        data: {
+          organizationId: input.organizationId,
+          userId: newUser.id,
+          email: input.email,
+          name: input.email.split('@')[0] ?? 'Unknown',
+          role: input.role,
+          departmentId: input.departmentId,
+          status: 'INVITED',
+          invitedBy: ctx.session.user.id,
+        },
+        include: {
+          user: { select: { name: true, email: true } },
+          department: true,
+        },
+      });
+
+      return member;
+    }),
+
+  // Update member status
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        memberId: z.string(),
+        status: z.enum(['ACTIVE', 'INVITED', 'SUSPENDED']),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const member = await ctx.db.member.findUnique({
+        where: { id: input.memberId },
+      });
+
+      if (!member) {
+        throw new TRPCError({ code: 'NOT_FOUND' });
+      }
+
+      // Check permission
+      const hasPermission = await ctx.db.member.findFirst({
+        where: {
+          organizationId: member.organizationId,
+          userId: ctx.session.user.id,
+          role: { in: ['OWNER', 'ADMIN'] },
+        },
+      });
+
+      if (!hasPermission) {
+        throw new TRPCError({ code: 'FORBIDDEN' });
+      }
+
+      return await ctx.db.member.update({
+        where: { id: input.memberId },
+        data: { status: input.status },
+        include: {
+          user: { select: { name: true, email: true } },
+          department: true,
+        },
+      });
+    }),
 });
