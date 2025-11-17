@@ -21,9 +21,12 @@ export type NotificationType = "ASSIGNMENT" | "MENTION" | "COMMENT" | "SHARE" | 
 // Validation result types
 export interface ValidationError {
   taskId: string;
-  type: "MISSING_ACCOUNTABLE" | "MULTIPLE_ACCOUNTABLE" | "MISSING_RESPONSIBLE" | "OVERLOAD_WARNING";
+  taskName: string;
+  type: "MISSING_ACCOUNTABLE" | "MULTIPLE_ACCOUNTABLE" | "MISSING_RESPONSIBLE" | "NO_ASSIGNMENTS" | "OVERLOAD_WARNING";
   message: string;
   severity: "error" | "warning";
+  memberId?: string;
+  memberName?: string;
 }
 
 export interface ValidationResult {
@@ -115,3 +118,13 @@ export interface BottleneckAnalysis {
     accountable: string;
   }[];
 }
+
+// Additional component-specific types
+export type RaciTask = TaskWithAssignments;
+export type RaciMember = MemberWithDepartment;
+export type RaciCellData = {
+  taskId: string;
+  memberId: string;
+  role: RACIRole | null;
+  assignmentId?: string | null;
+};

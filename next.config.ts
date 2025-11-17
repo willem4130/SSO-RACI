@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next'
 import './src/env'
 import { withSentryConfig } from '@sentry/nextjs'
+import createNextIntlPlugin from 'next-intl/plugin'
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 const nextConfig: NextConfig = {
   // Turbopack is enabled by default in Next.js 16+ with --turbopack flag
@@ -8,7 +11,7 @@ const nextConfig: NextConfig = {
 
 // Injected content via Sentry wizard below
 
-export default withSentryConfig(nextConfig, {
+export default withSentryConfig(withNextIntl(nextConfig), {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 

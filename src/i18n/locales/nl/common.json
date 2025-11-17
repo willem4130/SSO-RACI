@@ -1,0 +1,127 @@
+{
+  "common": {
+    "appName": "RACI Matrix",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "create": "Aanmaken",
+    "search": "Zoeken",
+    "filter": "Filteren",
+    "export": "Exporteren",
+    "import": "Importeren",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "back": "Terug",
+    "next": "Volgende",
+    "previous": "Vorige",
+    "finish": "Voltooien"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "organizations": "Organisaties",
+    "projects": "Projecten",
+    "templates": "Sjablonen",
+    "admin": "Beheer",
+    "settings": "Instellingen",
+    "logout": "Uitloggen"
+  },
+  "raci": {
+    "title": "RACI Matrix",
+    "responsible": "Verantwoordelijk",
+    "accountable": "Eindverantwoordelijk",
+    "consulted": "Geraadpleegd",
+    "informed": "Geïnformeerd",
+    "task": "Taak",
+    "tasks": "Taken",
+    "addTask": "Taak Toevoegen",
+    "editTask": "Taak Bewerken",
+    "deleteTask": "Taak Verwijderen",
+    "assignRole": "Rol Toewijzen",
+    "removeRole": "Rol Verwijderen",
+    "validation": {
+      "exactlyOneAccountable": "Elke taak moet precies één Eindverantwoordelijke hebben",
+      "atLeastOneResponsible": "Elke taak moet minimaal één Verantwoordelijke hebben",
+      "noAssignments": "Deze taak heeft geen toewijzingen"
+    }
+  },
+  "matrix": {
+    "title": "Matrix",
+    "createMatrix": "Matrix Aanmaken",
+    "editMatrix": "Matrix Bewerken",
+    "deleteMatrix": "Matrix Verwijderen",
+    "matrixName": "Matrix Naam",
+    "description": "Omschrijving",
+    "category": "Categorie",
+    "status": "Status",
+    "active": "Actief",
+    "archived": "Gearchiveerd",
+    "draft": "Concept"
+  },
+  "project": {
+    "title": "Project",
+    "projects": "Projecten",
+    "createProject": "Project Aanmaken",
+    "editProject": "Project Bewerken",
+    "deleteProject": "Project Verwijderen",
+    "projectName": "Project Naam",
+    "noProjects": "Geen projecten gevonden",
+    "selectProject": "Selecteer een project"
+  },
+  "organization": {
+    "title": "Organisatie",
+    "organizations": "Organisaties",
+    "createOrganization": "Organisatie Aanmaken",
+    "editOrganization": "Organisatie Bewerken",
+    "organizationName": "Organisatie Naam",
+    "members": "Leden",
+    "departments": "Afdelingen"
+  },
+  "member": {
+    "title": "Lid",
+    "members": "Leden",
+    "addMember": "Lid Toevoegen",
+    "removeMember": "Lid Verwijderen",
+    "name": "Naam",
+    "email": "E-mail",
+    "role": "Rol",
+    "department": "Afdeling"
+  },
+  "template": {
+    "title": "Sjabloon",
+    "templates": "Sjablonen",
+    "useTemplate": "Sjabloon Gebruiken",
+    "createTemplate": "Sjabloon Aanmaken",
+    "saveAsTemplate": "Opslaan als Sjabloon",
+    "predefined": "Voorgedefinieerde Sjablonen",
+    "custom": "Aangepaste Sjablonen",
+    "categories": {
+      "softwareDevelopment": "Softwareontwikkeling",
+      "projectManagement": "Projectmanagement",
+      "marketing": "Marketing",
+      "hr": "Human Resources",
+      "finance": "Financiën"
+    }
+  },
+  "analytics": {
+    "title": "Analyses",
+    "overview": "Overzicht",
+    "taskDistribution": "Taakverdeling",
+    "roleDistribution": "Rolverdeling",
+    "completionRate": "Voltooiingspercentage",
+    "workload": "Werklastanalyse"
+  },
+  "validation": {
+    "required": "Dit veld is verplicht",
+    "invalidEmail": "Ongeldig e-mailadres",
+    "minLength": "Moet minimaal {min} tekens bevatten",
+    "maxLength": "Mag maximaal {max} tekens bevatten"
+  },
+  "notifications": {
+    "taskAssigned": "Je hebt een nieuwe taak toegewezen gekregen",
+    "taskCompleted": "Taak voltooid",
+    "matrixShared": "Matrix met jou gedeeld",
+    "commentAdded": "Nieuwe opmerking toegevoegd"
+  }
+}

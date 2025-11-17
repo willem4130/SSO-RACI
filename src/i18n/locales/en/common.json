@@ -1,0 +1,127 @@
+{
+  "common": {
+    "appName": "RACI Matrix",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "organizations": "Organizations",
+    "projects": "Projects",
+    "templates": "Templates",
+    "admin": "Admin",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "raci": {
+    "title": "RACI Matrix",
+    "responsible": "Responsible",
+    "accountable": "Accountable",
+    "consulted": "Consulted",
+    "informed": "Informed",
+    "task": "Task",
+    "tasks": "Tasks",
+    "addTask": "Add Task",
+    "editTask": "Edit Task",
+    "deleteTask": "Delete Task",
+    "assignRole": "Assign Role",
+    "removeRole": "Remove Role",
+    "validation": {
+      "exactlyOneAccountable": "Each task must have exactly one Accountable person",
+      "atLeastOneResponsible": "Each task must have at least one Responsible person",
+      "noAssignments": "This task has no assignments"
+    }
+  },
+  "matrix": {
+    "title": "Matrix",
+    "createMatrix": "Create Matrix",
+    "editMatrix": "Edit Matrix",
+    "deleteMatrix": "Delete Matrix",
+    "matrixName": "Matrix Name",
+    "description": "Description",
+    "category": "Category",
+    "status": "Status",
+    "active": "Active",
+    "archived": "Archived",
+    "draft": "Draft"
+  },
+  "project": {
+    "title": "Project",
+    "projects": "Projects",
+    "createProject": "Create Project",
+    "editProject": "Edit Project",
+    "deleteProject": "Delete Project",
+    "projectName": "Project Name",
+    "noProjects": "No projects found",
+    "selectProject": "Select a project"
+  },
+  "organization": {
+    "title": "Organization",
+    "organizations": "Organizations",
+    "createOrganization": "Create Organization",
+    "editOrganization": "Edit Organization",
+    "organizationName": "Organization Name",
+    "members": "Members",
+    "departments": "Departments"
+  },
+  "member": {
+    "title": "Member",
+    "members": "Members",
+    "addMember": "Add Member",
+    "removeMember": "Remove Member",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "department": "Department"
+  },
+  "template": {
+    "title": "Template",
+    "templates": "Templates",
+    "useTemplate": "Use Template",
+    "createTemplate": "Create Template",
+    "saveAsTemplate": "Save as Template",
+    "predefined": "Pre-defined Templates",
+    "custom": "Custom Templates",
+    "categories": {
+      "softwareDevelopment": "Software Development",
+      "projectManagement": "Project Management",
+      "marketing": "Marketing",
+      "hr": "Human Resources",
+      "finance": "Finance"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "overview": "Overview",
+    "taskDistribution": "Task Distribution",
+    "roleDistribution": "Role Distribution",
+    "completionRate": "Completion Rate",
+    "workload": "Workload Analysis"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be at most {max} characters"
+  },
+  "notifications": {
+    "taskAssigned": "You have been assigned a new task",
+    "taskCompleted": "Task completed",
+    "matrixShared": "Matrix shared with you",
+    "commentAdded": "New comment added"
+  }
+}

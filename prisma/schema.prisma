@@ -11,6 +11,31 @@ datasource db {
 }
 
 // ============================================================================
+// ENUMS
+// ============================================================================
+
+enum RaciRole {
+  RESPONSIBLE
+  ACCOUNTABLE
+  CONSULTED
+  INFORMED
+}
+
+enum MatrixCategory {
+  SOFTWARE_DEVELOPMENT
+  PROJECT_MANAGEMENT
+  MARKETING
+  HR
+  PRODUCT
+  FINANCE
+  IT_SECURITY
+  EVENT_PLANNING
+  CONTENT
+  PROCUREMENT
+  CUSTOM
+}
+
+// ============================================================================
 // AUTHENTICATION & USERS
 // ============================================================================
 
@@ -189,7 +214,7 @@ model Assignment {
   task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   memberId   String
   member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  raciRole   String   // RESPONSIBLE, ACCOUNTABLE, CONSULTED, INFORMED
+  raciRole   RaciRole
   assignedBy String
   assignedAt DateTime @default(now())
   notes      String?

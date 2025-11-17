@@ -3,6 +3,10 @@ import { organizationRouter } from '@/server/api/routers/organization'
 import { matrixRouter } from '@/server/api/routers/matrix'
 import { taskRouter } from '@/server/api/routers/task'
 import { assignmentRouter } from '@/server/api/routers/assignment'
+import { templateRouter } from '@/server/api/routers/template'
+import { memberRouter } from '@/server/api/routers/member'
+import { projectRouter } from '@/server/api/routers/project'
+import { departmentRouter } from '@/server/api/routers/department'
 
 /**
  * This is the primary router for your server.
@@ -13,6 +17,10 @@ export const appRouter = createTRPCRouter({
   matrix: matrixRouter,
   task: taskRouter,
   assignment: assignmentRouter,
+  template: templateRouter,
+  member: memberRouter,
+  project: projectRouter,
+  department: departmentRouter,
 })
 
 // Export type definition of API

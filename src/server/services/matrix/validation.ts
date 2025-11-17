@@ -39,6 +39,7 @@ export async function validateRACIMatrix(
       errors: [
         {
           taskId: "",
+          taskName: "N/A",
           type: "MISSING_ACCOUNTABLE",
           message: "Matrix not found",
           severity: "error",
@@ -92,6 +93,7 @@ function validateTask(task: {
   if (accountableAssignments.length === 0) {
     errors.push({
       taskId: task.id,
+      taskName: task.name,
       type: "MISSING_ACCOUNTABLE",
       message: `Task "${task.name}" has no Accountable person assigned`,
       severity: "error",
@@ -99,6 +101,7 @@ function validateTask(task: {
   } else if (accountableAssignments.length > 1) {
     errors.push({
       taskId: task.id,
+      taskName: task.name,
       type: "MULTIPLE_ACCOUNTABLE",
       message: `Task "${task.name}" has multiple Accountable people (${accountableAssignments.map((a) => a.member.name).join(", ")})`,
       severity: "error",
@@ -113,6 +116,7 @@ function validateTask(task: {
   if (responsibleAssignments.length === 0) {
     warnings.push({
       taskId: task.id,
+      taskName: task.name,
       type: "MISSING_RESPONSIBLE",
       message: `Task "${task.name}" has no Responsible person assigned`,
       severity: "warning",
@@ -184,6 +188,7 @@ async function validateWorkloadDistribution(
     if (stats.total > OVERLOAD_THRESHOLD) {
       warnings.push({
         taskId: "",
+        taskName: "Multiple tasks",
         type: "OVERLOAD_WARNING",
         message: `${stats.name} has ${stats.total} assignments (threshold: ${OVERLOAD_THRESHOLD})`,
         severity: "warning",
@@ -193,6 +198,7 @@ async function validateWorkloadDistribution(
     if (stats.accountable > ACCOUNTABLE_THRESHOLD) {
       warnings.push({
         taskId: "",
+        taskName: "Multiple tasks",
         type: "OVERLOAD_WARNING",
         message: `${stats.name} is Accountable for ${stats.accountable} tasks (threshold: ${ACCOUNTABLE_THRESHOLD})`,
         severity: "warning",
