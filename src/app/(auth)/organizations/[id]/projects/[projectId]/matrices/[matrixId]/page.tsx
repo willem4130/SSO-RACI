@@ -27,6 +27,7 @@ import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard
 import { PresenceIndicator } from '@/components/realtime/presence-indicator'
 import { ActivityFeed } from '@/components/realtime/activity-feed'
 import { CommentThread } from '@/components/comments/comment-thread'
+import { ExportDialog } from '@/components/raci/export-dialog'
 import { useRealtime } from '@/hooks/use-realtime'
 import { Badge } from '@/components/ui/badge'
 import type {
@@ -540,6 +541,7 @@ export default function MatrixEditorPage() {
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
+              <ExportDialog matrixId={matrixId} matrixName={matrix.name} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">

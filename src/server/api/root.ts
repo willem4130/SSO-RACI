@@ -10,6 +10,7 @@ import { projectRouter } from '@/server/api/routers/project'
 import { departmentRouter } from '@/server/api/routers/department'
 import { realtimeRouter } from '@/server/api/routers/realtime'
 import { commentRouter } from '@/server/api/routers/comment'
+import { exportRouter } from '@/server/api/routers/export'
 
 /**
  * This is the primary router for your server.
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   department: departmentRouter,
   realtime: realtimeRouter,
   comment: commentRouter,
+  export: exportRouter,
 })
 
 // Export type definition of API
