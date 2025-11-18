@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2, Radio } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2, Radio, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -26,6 +26,7 @@ import { ValidationSummary } from '@/components/raci/validation-summary'
 import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard'
 import { PresenceIndicator } from '@/components/realtime/presence-indicator'
 import { ActivityFeed } from '@/components/realtime/activity-feed'
+import { CommentThread } from '@/components/comments/comment-thread'
 import { useRealtime } from '@/hooks/use-realtime'
 import { Badge } from '@/components/ui/badge'
 import type {
@@ -53,6 +54,7 @@ export default function MatrixEditorPage() {
   const [showValidation, setShowValidation] = useState(true)
   const [showHealthDashboard, setShowHealthDashboard] = useState(true)
   const [showActivityFeed, setShowActivityFeed] = useState(true)
+  const [showComments, setShowComments] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   // Real-time collaboration
@@ -501,6 +503,14 @@ export default function MatrixEditorPage() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setShowComments(!showComments)}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Comments
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowActivityFeed(!showActivityFeed)}
               >
                 <Activity className="mr-2 h-4 w-4" />
@@ -603,6 +613,14 @@ export default function MatrixEditorPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Comments (Phase 4 - Comments & Mentions) */}
+            {showComments && (
+              <CommentThread
+                organizationId={orgId}
+                matrixId={matrixId}
+              />
+            )}
+
             {/* Activity Feed (Phase 3 - Real-time Collaboration) */}
             {showActivityFeed && <ActivityFeed matrixId={matrixId} limit={50} />}
 

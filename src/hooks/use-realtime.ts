@@ -27,6 +27,7 @@ export interface UseRealtimeOptions {
   onEvent?: (event: RealtimeEvent) => void
   onPresenceChange?: (users: PresenceUser[]) => void
   onMatrixUpdate?: (data: unknown) => void
+  onCommentUpdate?: (data: unknown) => void
   enabled?: boolean
 }
 
@@ -35,6 +36,7 @@ export function useRealtime({
   onEvent,
   onPresenceChange,
   onMatrixUpdate,
+  onCommentUpdate,
   enabled = true,
 }: UseRealtimeOptions) {
   const [isConnected, setIsConnected] = useState(false)
@@ -87,6 +89,11 @@ export function useRealtime({
               break
             }
 
+            case 'comment': {
+              onCommentUpdate?.(data.data)
+              break
+            }
+
             case 'heartbeat': {
               // Heartbeat received, connection is alive
               break
@@ -120,7 +127,7 @@ export function useRealtime({
       console.error('[Realtime] Failed to connect:', error)
       setIsConnected(false)
     }
-  }, [matrixId, enabled, onEvent, onPresenceChange, onMatrixUpdate])
+  }, [matrixId, enabled, onEvent, onPresenceChange, onMatrixUpdate, onCommentUpdate])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
