@@ -13,7 +13,24 @@ import { RaciCell } from './raci-cell'
 import type { RaciTask, RaciMember, RaciCellData } from '@/types/raci'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Plus, AlertTriangle } from 'lucide-react'
+import { Plus, AlertTriangle, GripVertical } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface RaciMatrixGridProps {
   tasks: RaciTask[]
@@ -25,6 +42,7 @@ interface RaciMatrixGridProps {
     assignmentId?: string
   ) => Promise<void>
   onTaskUpdate?: (taskId: string, updates: Partial<RaciTask>) => void
+  onTaskReorder?: (reorderedTasks: RaciTask[]) => Promise<void>
   onAddTask?: () => void
   onAddMember?: () => void
   isReadOnly?: boolean
@@ -36,17 +54,98 @@ type TaskRow = {
   [key: string]: RaciCellData | RaciTask
 }
 
+// Sortable row component for drag-and-drop
+function SortableRow({
+  row,
+  children,
+  isReadOnly,
+}: {
+  row: any
+  children: React.ReactNode
+  isReadOnly: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: row.original.task.id,
+    disabled: isReadOnly,
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <tr ref={setNodeRef} style={style} className="border-b last:border-b-0">
+      {children}
+      {!isReadOnly && (
+        <td className="border-r">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-2 hover:bg-gray-100"
+          >
+            <GripVertical className="h-4 w-4 text-gray-400" />
+          </div>
+        </td>
+      )}
+    </tr>
+  )
+}
+
 export function RaciMatrixGrid({
   tasks,
   members,
   onAssignmentChange,
   onTaskUpdate,
+  onTaskReorder,
   onAddTask,
   onAddMember,
   isReadOnly = false,
   showValidation = true,
 }: RaciMatrixGridProps) {
   const [loadingCell, setLoadingCell] = useState<string | null>(null)
+  const [localTasks, setLocalTasks] = useState(tasks)
+
+  // Update local tasks when prop changes
+  useMemo(() => {
+    setLocalTasks(tasks)
+  }, [tasks])
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id || !onTaskReorder) return
+
+    const oldIndex = localTasks.findIndex((t) => t.id === active.id)
+    const newIndex = localTasks.findIndex((t) => t.id === over.id)
+
+    if (oldIndex === -1 || newIndex === -1) return
+
+    // Optimistically update local state
+    const reordered = arrayMove(localTasks, oldIndex, newIndex).map((task, index) => ({
+      ...task,
+      orderIndex: index,
+    }))
+
+    setLocalTasks(reordered)
+
+    try {
+      // Call parent handler to persist to database
+      await onTaskReorder(reordered)
+    } catch (error) {
+      // Rollback on error
+      setLocalTasks(tasks)
+    }
+  }
 
   // Validate tasks
   const taskValidation = useMemo(() => {
@@ -57,7 +156,7 @@ export function RaciMatrixGrid({
       { hasAccountable: boolean; hasResponsible: boolean; accountableCount: number }
     > = {}
 
-    tasks.forEach((task) => {
+    localTasks.forEach((task) => {
       const accountableCount = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE').length
       const hasResponsible = task.assignments.some((a) => a.raciRole === 'RESPONSIBLE')
 
@@ -69,7 +168,7 @@ export function RaciMatrixGrid({
     })
 
     return validation
-  }, [tasks, showValidation])
+  }, [localTasks, showValidation])
 
   const handleRoleChange = async (
     taskId: string,
@@ -88,7 +187,7 @@ export function RaciMatrixGrid({
 
   // Transform tasks into table data
   const data = useMemo<TaskRow[]>(() => {
-    return tasks.map((task) => {
+    return localTasks.map((task) => {
       const row: TaskRow = { task }
 
       members.forEach((member) => {
@@ -104,7 +203,7 @@ export function RaciMatrixGrid({
 
       return row
     })
-  }, [tasks, members])
+  }, [localTasks, members])
 
   const columnHelper = createColumnHelper<TaskRow>()
 
@@ -311,74 +410,83 @@ export function RaciMatrixGrid({
   }
 
   return (
-    <div className="border rounded-lg overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-50 border-b">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="border-r last:border-r-0 text-left"
-                    style={{ width: header.getSize() }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-50 border-b">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="border-r last:border-r-0 text-left"
+                      style={{ width: header.getSize() }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                  {!isReadOnly && (
+                    <th className="border-r w-12 bg-gray-50">
+                      <GripVertical className="h-4 w-4 text-gray-400 mx-auto" />
+                    </th>
+                  )}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              <SortableContext items={localTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                {table.getRowModel().rows.map((row) => (
+                  <SortableRow key={row.id} row={row} isReadOnly={isReadOnly}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className={cn('border-r last:border-r-0', cell.column.id !== 'task' && 'p-0')}
+                        style={{ width: cell.column.getSize() }}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </SortableRow>
                 ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b last:border-b-0">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={cn('border-r last:border-r-0', cell.column.id !== 'task' && 'p-0')}
-                    style={{ width: cell.column.getSize() }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </SortableContext>
+            </tbody>
+          </table>
+        </div>
 
-      {/* Legend */}
-      <div className="bg-gray-50 border-t px-4 py-3">
-        <div className="flex items-center gap-6 text-xs">
-          <span className="font-semibold text-gray-700">Legend:</span>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-blue-100 text-blue-900 font-semibold border border-blue-300">
-              R
-            </span>
-            <span className="text-gray-600">Responsible</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-green-100 text-green-900 font-semibold border border-green-300">
-              A
-            </span>
-            <span className="text-gray-600">Accountable</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-900 font-semibold border border-yellow-300">
-              C
-            </span>
-            <span className="text-gray-600">Consulted</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-1 rounded bg-purple-100 text-purple-900 font-semibold border border-purple-300">
-              I
-            </span>
-            <span className="text-gray-600">Informed</span>
+        {/* Legend */}
+        <div className="bg-gray-50 border-t px-4 py-3">
+          <div className="flex items-center gap-6 text-xs">
+            <span className="font-semibold text-gray-700">Legend:</span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 rounded bg-blue-100 text-blue-900 font-semibold border border-blue-300">
+                R
+              </span>
+              <span className="text-gray-600">Responsible</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 rounded bg-green-100 text-green-900 font-semibold border border-green-300">
+                A
+              </span>
+              <span className="text-gray-600">Accountable</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-900 font-semibold border border-yellow-300">
+                C
+              </span>
+              <span className="text-gray-600">Consulted</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-1 rounded bg-purple-100 text-purple-900 font-semibold border border-purple-300">
+                I
+              </span>
+              <span className="text-gray-600">Informed</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </DndContext>
   )
 }

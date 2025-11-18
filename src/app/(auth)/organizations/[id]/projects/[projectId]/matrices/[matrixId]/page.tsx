@@ -2,8 +2,25 @@
 
 import { useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2 } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { RaciMatrixGrid } from '@/components/raci/raci-matrix-grid'
 import { ValidationSummary } from '@/components/raci/validation-summary'
 import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard'
@@ -32,6 +49,12 @@ export default function MatrixEditorPage() {
   const [showValidation, setShowValidation] = useState(true)
   const [showHealthDashboard, setShowHealthDashboard] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Matrix CRUD dialog states
+  const [showRenameDialog, setShowRenameDialog] = useState(false)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [newMatrixName, setNewMatrixName] = useState('')
 
   // Fetch matrix data
   const {
@@ -89,6 +112,43 @@ export default function MatrixEditorPage() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
       void refetchHealth()
+    },
+  })
+
+  // Mutation: Reorder tasks
+  const reorderTasksMutation = api.task.reorder.useMutation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+    },
+  })
+
+  // Mutation: Update matrix (rename)
+  const updateMatrixMutation = api.matrix.update.useMutation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      setShowRenameDialog(false)
+      setNewMatrixName('')
+    },
+  })
+
+  // Mutation: Archive matrix
+  const archiveMatrixMutation = api.matrix.archive.useMutation({
+    onSuccess: () => {
+      router.push(`/organizations/${orgId}/projects/${projectId}`)
+    },
+  })
+
+  // Mutation: Delete matrix
+  const deleteMatrixMutation = api.matrix.delete.useMutation({
+    onSuccess: () => {
+      router.push(`/organizations/${orgId}/projects/${projectId}`)
+    },
+  })
+
+  // Mutation: Duplicate matrix
+  const duplicateMatrixMutation = api.matrix.duplicate.useMutation({
+    onSuccess: (newMatrix) => {
+      router.push(`/organizations/${orgId}/projects/${projectId}/matrices/${newMatrix.id}`)
     },
   })
 
@@ -258,6 +318,23 @@ export default function MatrixEditorPage() {
     })
   }
 
+  const handleTaskReorder = async (reorderedTasks: RaciTask[]) => {
+    try {
+      await reorderTasksMutation.mutateAsync({
+        matrixId,
+        organizationId: orgId,
+        taskOrders: reorderedTasks.map((task, index) => ({
+          id: task.id,
+          orderIndex: index,
+        })),
+      })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to reorder tasks')
+      setTimeout(() => setErrorMessage(null), 5000)
+      throw error // Re-throw to trigger rollback in component
+    }
+  }
+
   const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
     console.log('Applying suggestion:', suggestion)
     // TODO: Implement suggestion application logic
@@ -266,6 +343,58 @@ export default function MatrixEditorPage() {
   const handleDismissSuggestion = (suggestion: ValidationSuggestion) => {
     console.log('Dismissing suggestion:', suggestion)
     // TODO: Implement suggestion dismissal logic
+  }
+
+  // Matrix CRUD handlers
+  const handleRenameMatrix = async () => {
+    if (!newMatrixName.trim()) return
+    try {
+      await updateMatrixMutation.mutateAsync({
+        id: matrixId,
+        organizationId: orgId,
+        name: newMatrixName.trim(),
+      })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to rename matrix')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
+  }
+
+  const handleDuplicateMatrix = async () => {
+    try {
+      await duplicateMatrixMutation.mutateAsync({
+        id: matrixId,
+        organizationId: orgId,
+        newName: newMatrixName.trim() || undefined,
+      })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to duplicate matrix')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
+  }
+
+  const handleArchiveMatrix = async () => {
+    try {
+      await archiveMatrixMutation.mutateAsync({
+        id: matrixId,
+        organizationId: orgId,
+      })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to archive matrix')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
+  }
+
+  const handleDeleteMatrix = async () => {
+    try {
+      await deleteMatrixMutation.mutateAsync({
+        id: matrixId,
+        organizationId: orgId,
+      })
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete matrix')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
   }
 
   // Loading state
@@ -365,6 +494,45 @@ export default function MatrixEditorPage() {
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setNewMatrixName(matrix.name)
+                      setShowRenameDialog(true)
+                    }}
+                  >
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Rename Matrix
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setNewMatrixName('')
+                      setShowDuplicateDialog(true)
+                    }}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate Matrix
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleArchiveMatrix}>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive Matrix
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Matrix
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -389,6 +557,7 @@ export default function MatrixEditorPage() {
                   members={members}
                   onAssignmentChange={handleAssignmentChange}
                   onTaskUpdate={handleTaskUpdate}
+                  onTaskReorder={handleTaskReorder}
                   showValidation={showValidation}
                   onAddTask={handleAddTask}
                 />
@@ -457,6 +626,119 @@ export default function MatrixEditorPage() {
           </div>
         </div>
       </div>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Matrix</DialogTitle>
+            <DialogDescription>Enter a new name for this RACI matrix.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="matrix-name">Matrix Name</Label>
+              <Input
+                id="matrix-name"
+                value={newMatrixName}
+                onChange={(e) => setNewMatrixName(e.target.value)}
+                placeholder="Enter matrix name"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameMatrix()
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRenameMatrix}
+              disabled={!newMatrixName.trim() || updateMatrixMutation.isPending}
+            >
+              {updateMatrixMutation.isPending ? 'Renaming...' : 'Rename'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate Matrix</DialogTitle>
+            <DialogDescription>
+              Create a copy of this matrix with all tasks and assignments.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="duplicate-name">New Matrix Name (optional)</Label>
+              <Input
+                id="duplicate-name"
+                value={newMatrixName}
+                onChange={(e) => setNewMatrixName(e.target.value)}
+                placeholder={`${matrix?.name} (Copy)`}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleDuplicateMatrix()
+                }}
+              />
+              <p className="text-xs text-muted-foreground">
+                Leave blank to auto-generate a name
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDuplicateMatrix}
+              disabled={duplicateMatrixMutation.isPending}
+            >
+              {duplicateMatrixMutation.isPending ? 'Duplicating...' : 'Duplicate'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Matrix</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this matrix? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-900 font-medium">
+                This will permanently delete:
+              </p>
+              <ul className="text-sm text-red-800 mt-2 space-y-1 list-disc list-inside">
+                <li>{tasks.length} tasks</li>
+                <li>All RACI assignments</li>
+                <li>All comments and history</li>
+              </ul>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteMatrix}
+              disabled={deleteMatrixMutation.isPending}
+            >
+              {deleteMatrixMutation.isPending ? 'Deleting...' : 'Delete Matrix'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
