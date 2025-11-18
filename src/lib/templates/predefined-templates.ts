@@ -1,22 +1,22 @@
-import type { MatrixCategory } from '@prisma/client';
+import type { MatrixCategory } from '@prisma/client'
 
 export interface TemplateTask {
-  name: string;
-  description: string;
-  order: number;
+  name: string
+  description: string
+  order: number
   roles: {
-    memberRole: string; // e.g., "Project Manager", "Developer", "QA"
-    raciRole: 'RESPONSIBLE' | 'ACCOUNTABLE' | 'CONSULTED' | 'INFORMED';
-  }[];
+    memberRole: string // e.g., "Project Manager", "Developer", "QA"
+    raciRole: 'RESPONSIBLE' | 'ACCOUNTABLE' | 'CONSULTED' | 'INFORMED'
+  }[]
 }
 
 export interface RaciTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: MatrixCategory;
-  memberRoles: string[]; // Generic role names that can be mapped to actual members
-  tasks: TemplateTask[];
+  id: string
+  name: string
+  description: string
+  category: MatrixCategory
+  memberRoles: string[] // Generic role names that can be mapped to actual members
+  tasks: TemplateTask[]
 }
 
 export const predefinedTemplates: RaciTemplate[] = [
@@ -26,7 +26,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Sprint Planning & Execution',
     description: 'Complete agile sprint workflow from planning to deployment',
     category: 'SOFTWARE_DEVELOPMENT',
-    memberRoles: ['Product Owner', 'Scrum Master', 'Tech Lead', 'Developer', 'QA Engineer', 'DevOps'],
+    memberRoles: [
+      'Product Owner',
+      'Scrum Master',
+      'Tech Lead',
+      'Developer',
+      'QA Engineer',
+      'DevOps',
+    ],
     tasks: [
       {
         name: 'Sprint Planning',
@@ -180,7 +187,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Marketing Campaign Launch',
     description: 'Plan and execute a multi-channel marketing campaign',
     category: 'MARKETING',
-    memberRoles: ['Marketing Director', 'Campaign Manager', 'Content Creator', 'Designer', 'Analyst', 'Social Media Manager'],
+    memberRoles: [
+      'Marketing Director',
+      'Campaign Manager',
+      'Content Creator',
+      'Designer',
+      'Analyst',
+      'Social Media Manager',
+    ],
     tasks: [
       {
         name: 'Campaign Strategy',
@@ -246,7 +260,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Employee Onboarding Process',
     description: 'Comprehensive new hire onboarding workflow',
     category: 'HR',
-    memberRoles: ['HR Manager', 'Hiring Manager', 'IT Support', 'Team Lead', 'Mentor', 'HR Coordinator'],
+    memberRoles: [
+      'HR Manager',
+      'Hiring Manager',
+      'IT Support',
+      'Team Lead',
+      'Mentor',
+      'HR Coordinator',
+    ],
     tasks: [
       {
         name: 'Pre-boarding Preparation',
@@ -312,7 +333,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Product Launch',
     description: 'Cross-functional product launch coordination',
     category: 'PRODUCT',
-    memberRoles: ['Product Manager', 'Engineering Lead', 'Marketing Lead', 'Sales Lead', 'Support Lead', 'Designer'],
+    memberRoles: [
+      'Product Manager',
+      'Engineering Lead',
+      'Marketing Lead',
+      'Sales Lead',
+      'Support Lead',
+      'Designer',
+    ],
     tasks: [
       {
         name: 'Product Definition',
@@ -455,7 +483,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Security Incident Response',
     description: 'Handle security incidents and breaches',
     category: 'IT_SECURITY',
-    memberRoles: ['Security Officer', 'IT Manager', 'System Admin', 'Legal', 'Communications', 'Executive'],
+    memberRoles: [
+      'Security Officer',
+      'IT Manager',
+      'System Admin',
+      'Legal',
+      'Communications',
+      'Executive',
+    ],
     tasks: [
       {
         name: 'Incident Detection',
@@ -531,7 +566,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Corporate Event Planning',
     description: 'Plan and execute corporate events',
     category: 'EVENT_PLANNING',
-    memberRoles: ['Event Manager', 'Executive Sponsor', 'Venue Coordinator', 'Marketing', 'Finance', 'Logistics'],
+    memberRoles: [
+      'Event Manager',
+      'Executive Sponsor',
+      'Venue Coordinator',
+      'Marketing',
+      'Finance',
+      'Logistics',
+    ],
     tasks: [
       {
         name: 'Event Concept',
@@ -605,7 +647,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Content Publishing Workflow',
     description: 'Create and publish content across channels',
     category: 'MARKETING',
-    memberRoles: ['Content Director', 'Writer', 'Editor', 'Designer', 'SEO Specialist', 'Publisher'],
+    memberRoles: [
+      'Content Director',
+      'Writer',
+      'Editor',
+      'Designer',
+      'SEO Specialist',
+      'Publisher',
+    ],
     tasks: [
       {
         name: 'Content Planning',
@@ -680,7 +729,14 @@ export const predefinedTemplates: RaciTemplate[] = [
     name: 'Vendor Selection Process',
     description: 'Evaluate and select external vendors',
     category: 'PROCUREMENT',
-    memberRoles: ['Procurement Lead', 'Department Head', 'Finance', 'Legal', 'Technical Evaluator', 'Executive'],
+    memberRoles: [
+      'Procurement Lead',
+      'Department Head',
+      'Finance',
+      'Legal',
+      'Technical Evaluator',
+      'Executive',
+    ],
     tasks: [
       {
         name: 'Requirements Definition',
@@ -748,4 +804,4 @@ export const predefinedTemplates: RaciTemplate[] = [
       },
     ],
   },
-];
+]

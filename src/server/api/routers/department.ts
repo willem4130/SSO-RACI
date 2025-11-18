@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { TRPCError } from '@trpc/server';
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { TRPCError } from '@trpc/server'
 
 export const departmentRouter = createTRPCRouter({
   // List departments by organization
@@ -25,8 +25,8 @@ export const departmentRouter = createTRPCRouter({
           },
         },
         orderBy: { name: 'asc' },
-      });
-      return departments;
+      })
+      return departments
     }),
 
   // Create department
@@ -46,10 +46,10 @@ export const departmentRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       const department = await ctx.db.department.create({
@@ -59,9 +59,9 @@ export const departmentRouter = createTRPCRouter({
           code: input.name.toLowerCase().replace(/\s+/g, '-'), // Generate code from name
           parentId: input.parentId,
         },
-      });
+      })
 
-      return department;
+      return department
     }),
 
   // Update department
@@ -74,15 +74,15 @@ export const departmentRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, name, parentId } = input;
-      const data: { name?: string; code?: string; parentId?: string } = {};
+      const { id, name, parentId } = input
+      const data: { name?: string; code?: string; parentId?: string } = {}
 
       if (name) {
-        data.name = name;
-        data.code = name.toLowerCase().replace(/\s+/g, '-');
+        data.name = name
+        data.code = name.toLowerCase().replace(/\s+/g, '-')
       }
       if (parentId !== undefined) {
-        data.parentId = parentId;
+        data.parentId = parentId
       }
 
       // Verify access
@@ -98,16 +98,16 @@ export const departmentRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!department) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       return await ctx.db.department.update({
         where: { id },
         data,
-      });
+      })
     }),
 
   // Delete department
@@ -127,16 +127,16 @@ export const departmentRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!department) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       await ctx.db.department.delete({
         where: { id: input.id },
-      });
+      })
 
-      return { success: true };
+      return { success: true }
     }),
-});
+})

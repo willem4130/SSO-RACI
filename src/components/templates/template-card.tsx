@@ -1,19 +1,19 @@
-'use client';
+'use client'
 
-import { MatrixCategory } from '@prisma/client';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Users, ListChecks } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { MatrixCategory } from '@prisma/client'
+import { Button } from '@/components/ui/button'
+import { CheckCircle2, Users, ListChecks } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface TemplateCardProps {
-  id: string;
-  name: string;
-  description: string;
-  category: MatrixCategory;
-  taskCount: number;
-  memberRoleCount: number;
-  onUseTemplate: (templateId: string) => void;
-  onPreview?: (templateId: string) => void;
+  id: string
+  name: string
+  description: string
+  category: MatrixCategory
+  taskCount: number
+  memberRoleCount: number
+  onUseTemplate: (templateId: string) => void
+  onPreview?: (templateId: string) => void
 }
 
 const categoryColors: Record<MatrixCategory, string> = {
@@ -28,7 +28,7 @@ const categoryColors: Record<MatrixCategory, string> = {
   CONTENT: 'bg-teal-100 text-teal-800 border-teal-300',
   PROCUREMENT: 'bg-cyan-100 text-cyan-800 border-cyan-300',
   CUSTOM: 'bg-gray-100 text-gray-800 border-gray-300',
-};
+}
 
 const categoryLabels: Record<MatrixCategory, string> = {
   SOFTWARE_DEVELOPMENT: 'Software Development',
@@ -42,7 +42,7 @@ const categoryLabels: Record<MatrixCategory, string> = {
   CONTENT: 'Content',
   PROCUREMENT: 'Procurement',
   CUSTOM: 'Custom',
-};
+}
 
 export function TemplateCard({
   id,
@@ -88,24 +88,16 @@ export function TemplateCard({
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button
-          onClick={() => onUseTemplate(id)}
-          className="flex-1"
-          size="sm"
-        >
+        <Button onClick={() => onUseTemplate(id)} className="flex-1" size="sm">
           <CheckCircle2 className="h-4 w-4 mr-2" />
           Use Template
         </Button>
         {onPreview && (
-          <Button
-            onClick={() => onPreview(id)}
-            variant="outline"
-            size="sm"
-          >
+          <Button onClick={() => onPreview(id)} variant="outline" size="sm">
             Preview
           </Button>
         )}
       </div>
     </div>
-  );
+  )
 }

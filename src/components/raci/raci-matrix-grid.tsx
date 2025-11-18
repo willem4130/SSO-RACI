@@ -1,40 +1,40 @@
-'use client';
+'use client'
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
   flexRender,
   createColumnHelper,
   type ColumnDef,
-} from '@tanstack/react-table';
-import { RaciRole } from '@prisma/client';
-import { RaciCell } from './raci-cell';
-import type { RaciTask, RaciMember, RaciCellData } from '@/types/raci';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Plus, AlertTriangle } from 'lucide-react';
+} from '@tanstack/react-table'
+import { RaciRole } from '@prisma/client'
+import { RaciCell } from './raci-cell'
+import type { RaciTask, RaciMember, RaciCellData } from '@/types/raci'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Plus, AlertTriangle } from 'lucide-react'
 
 interface RaciMatrixGridProps {
-  tasks: RaciTask[];
-  members: RaciMember[];
+  tasks: RaciTask[]
+  members: RaciMember[]
   onAssignmentChange: (
     taskId: string,
     memberId: string,
     role: RaciRole | null,
     assignmentId?: string
-  ) => Promise<void>;
-  onTaskUpdate?: (taskId: string, updates: Partial<RaciTask>) => void;
-  onAddTask?: () => void;
-  onAddMember?: () => void;
-  isReadOnly?: boolean;
-  showValidation?: boolean;
+  ) => Promise<void>
+  onTaskUpdate?: (taskId: string, updates: Partial<RaciTask>) => void
+  onAddTask?: () => void
+  onAddMember?: () => void
+  isReadOnly?: boolean
+  showValidation?: boolean
 }
 
 type TaskRow = {
-  task: RaciTask;
-  [key: string]: RaciCellData | RaciTask;
-};
+  task: RaciTask
+  [key: string]: RaciCellData | RaciTask
+}
 
 export function RaciMatrixGrid({
   tasks,
@@ -46,31 +46,30 @@ export function RaciMatrixGrid({
   isReadOnly = false,
   showValidation = true,
 }: RaciMatrixGridProps) {
-  const [loadingCell, setLoadingCell] = useState<string | null>(null);
+  const [loadingCell, setLoadingCell] = useState<string | null>(null)
 
   // Validate tasks
   const taskValidation = useMemo(() => {
-    if (!showValidation) return {};
+    if (!showValidation) return {}
 
-    const validation: Record<string, { hasAccountable: boolean; hasResponsible: boolean; accountableCount: number }> = {};
+    const validation: Record<
+      string,
+      { hasAccountable: boolean; hasResponsible: boolean; accountableCount: number }
+    > = {}
 
     tasks.forEach((task) => {
-      const accountableCount = task.assignments.filter(
-        (a) => a.raciRole === 'ACCOUNTABLE'
-      ).length;
-      const hasResponsible = task.assignments.some(
-        (a) => a.raciRole === 'RESPONSIBLE'
-      );
+      const accountableCount = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE').length
+      const hasResponsible = task.assignments.some((a) => a.raciRole === 'RESPONSIBLE')
 
       validation[task.id] = {
         hasAccountable: accountableCount === 1,
         hasResponsible,
         accountableCount,
-      };
-    });
+      }
+    })
 
-    return validation;
-  }, [tasks, showValidation]);
+    return validation
+  }, [tasks, showValidation])
 
   const handleRoleChange = async (
     taskId: string,
@@ -78,38 +77,36 @@ export function RaciMatrixGrid({
     role: RaciRole | null,
     assignmentId?: string
   ) => {
-    const cellKey = `${taskId}-${memberId}`;
-    setLoadingCell(cellKey);
+    const cellKey = `${taskId}-${memberId}`
+    setLoadingCell(cellKey)
     try {
-      await onAssignmentChange(taskId, memberId, role, assignmentId);
+      await onAssignmentChange(taskId, memberId, role, assignmentId)
     } finally {
-      setLoadingCell(null);
+      setLoadingCell(null)
     }
-  };
+  }
 
   // Transform tasks into table data
   const data = useMemo<TaskRow[]>(() => {
     return tasks.map((task) => {
-      const row: TaskRow = { task };
+      const row: TaskRow = { task }
 
       members.forEach((member) => {
-        const assignment = task.assignments.find(
-          (a) => a.memberId === member.id
-        );
+        const assignment = task.assignments.find((a) => a.memberId === member.id)
 
         row[member.id] = {
           taskId: task.id,
           memberId: member.id,
           role: assignment?.raciRole ?? null,
           assignmentId: assignment?.id,
-        };
-      });
+        }
+      })
 
-      return row;
-    });
-  }, [tasks, members]);
+      return row
+    })
+  }, [tasks, members])
 
-  const columnHelper = createColumnHelper<TaskRow>();
+  const columnHelper = createColumnHelper<TaskRow>()
 
   const columns = useMemo<ColumnDef<TaskRow, any>[]>(() => {
     const cols: ColumnDef<TaskRow, any>[] = [
@@ -119,50 +116,38 @@ export function RaciMatrixGrid({
           <div className="flex items-center justify-between px-4 py-2">
             <span className="font-semibold">Tasks</span>
             {onAddTask && !isReadOnly && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onAddTask}
-                className="h-7 px-2"
-              >
+              <Button size="sm" variant="ghost" onClick={onAddTask} className="h-7 px-2">
                 <Plus className="h-4 w-4" />
               </Button>
             )}
           </div>
         ),
         cell: (info) => {
-          const task = info.getValue() as RaciTask;
-          const validation = taskValidation[task.id];
-          const hasError = validation && (!validation.hasAccountable || !validation.hasResponsible);
-          const [isEditingName, setIsEditingName] = useState(false);
-          const [isEditingDesc, setIsEditingDesc] = useState(false);
-          const [editName, setEditName] = useState(task.name);
-          const [editDesc, setEditDesc] = useState(task.description || '');
+          const task = info.getValue() as RaciTask
+          const validation = taskValidation[task.id]
+          const hasError = validation && (!validation.hasAccountable || !validation.hasResponsible)
+          const [isEditingName, setIsEditingName] = useState(false)
+          const [isEditingDesc, setIsEditingDesc] = useState(false)
+          const [editName, setEditName] = useState(task.name)
+          const [editDesc, setEditDesc] = useState(task.description || '')
 
           const handleNameSave = () => {
             if (editName.trim() && editName !== task.name && onTaskUpdate) {
-              onTaskUpdate(task.id, { name: editName.trim() });
+              onTaskUpdate(task.id, { name: editName.trim() })
             }
-            setIsEditingName(false);
-          };
+            setIsEditingName(false)
+          }
 
           const handleDescSave = () => {
             if (editDesc !== task.description && onTaskUpdate) {
-              onTaskUpdate(task.id, { description: editDesc.trim() || undefined });
+              onTaskUpdate(task.id, { description: editDesc.trim() || undefined })
             }
-            setIsEditingDesc(false);
-          };
+            setIsEditingDesc(false)
+          }
 
           return (
-            <div
-              className={cn(
-                'px-4 py-3 flex items-center gap-2',
-                hasError && 'bg-red-50'
-              )}
-            >
-              {hasError && (
-                <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
-              )}
+            <div className={cn('px-4 py-3 flex items-center gap-2', hasError && 'bg-red-50')}>
+              {hasError && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
               <div className="flex-1 min-w-0">
                 {isEditingName ? (
                   <input
@@ -172,10 +157,10 @@ export function RaciMatrixGrid({
                     onChange={(e) => setEditName(e.target.value)}
                     onBlur={handleNameSave}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleNameSave();
+                      if (e.key === 'Enter') handleNameSave()
                       if (e.key === 'Escape') {
-                        setEditName(task.name);
-                        setIsEditingName(false);
+                        setEditName(task.name)
+                        setIsEditingName(false)
                       }
                     }}
                     autoFocus
@@ -197,10 +182,10 @@ export function RaciMatrixGrid({
                     onChange={(e) => setEditDesc(e.target.value)}
                     onBlur={handleDescSave}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleDescSave();
+                      if (e.key === 'Enter') handleDescSave()
                       if (e.key === 'Escape') {
-                        setEditDesc(task.description || '');
-                        setIsEditingDesc(false);
+                        setEditDesc(task.description || '')
+                        setIsEditingDesc(false)
                       }
                     }}
                     autoFocus
@@ -215,12 +200,12 @@ export function RaciMatrixGrid({
                 )}
               </div>
             </div>
-          );
+          )
         },
         size: 250,
         minSize: 200,
       }),
-    ];
+    ]
 
     // Add member columns
     members.forEach((member) => {
@@ -231,16 +216,14 @@ export function RaciMatrixGrid({
             <div className="px-2 py-2 text-center">
               <div className="font-semibold text-sm truncate">{member.name}</div>
               {member.department && (
-                <div className="text-xs text-gray-500 truncate">
-                  {member.department.name}
-                </div>
+                <div className="text-xs text-gray-500 truncate">{member.department.name}</div>
               )}
             </div>
           ),
           cell: (info) => {
-            const cellData = info.getValue() as RaciCellData;
-            const cellKey = `${cellData.taskId}-${cellData.memberId}`;
-            const isLoading = loadingCell === cellKey;
+            const cellData = info.getValue() as RaciCellData
+            const cellKey = `${cellData.taskId}-${cellData.memberId}`
+            const isLoading = loadingCell === cellKey
 
             return (
               <div className="relative">
@@ -265,13 +248,13 @@ export function RaciMatrixGrid({
                   disabled={isReadOnly || isLoading}
                 />
               </div>
-            );
+            )
           },
           size: 100,
           minSize: 80,
         })
-      );
-    });
+      )
+    })
 
     // Add "Add Member" column if not read-only
     if (onAddMember && !isReadOnly) {
@@ -279,12 +262,7 @@ export function RaciMatrixGrid({
         columnHelper.display({
           id: 'add-member',
           header: () => (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onAddMember}
-              className="w-full h-full"
-            >
+            <Button size="sm" variant="ghost" onClick={onAddMember} className="w-full h-full">
               <Plus className="h-4 w-4" />
             </Button>
           ),
@@ -292,25 +270,17 @@ export function RaciMatrixGrid({
           size: 60,
           minSize: 60,
         })
-      );
+      )
     }
 
-    return cols;
-  }, [
-    members,
-    columnHelper,
-    onAddTask,
-    onAddMember,
-    isReadOnly,
-    taskValidation,
-    loadingCell,
-  ]);
+    return cols
+  }, [members, columnHelper, onAddTask, onAddMember, isReadOnly, taskValidation, loadingCell])
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-  });
+  })
 
   if (tasks.length === 0 || members.length === 0) {
     return (
@@ -337,7 +307,7 @@ export function RaciMatrixGrid({
           </div>
         )}
       </div>
-    );
+    )
   }
 
   return (
@@ -355,10 +325,7 @@ export function RaciMatrixGrid({
                   >
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </th>
                 ))}
               </tr>
@@ -370,10 +337,7 @@ export function RaciMatrixGrid({
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className={cn(
-                      'border-r last:border-r-0',
-                      cell.column.id !== 'task' && 'p-0'
-                    )}
+                    className={cn('border-r last:border-r-0', cell.column.id !== 'task' && 'p-0')}
                     style={{ width: cell.column.getSize() }}
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -416,5 +380,5 @@ export function RaciMatrixGrid({
         </div>
       </div>
     </div>
-  );
+  )
 }

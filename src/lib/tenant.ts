@@ -1,14 +1,14 @@
 // Multi-Tenant Utilities and Middleware
 
-import { type PrismaClient } from "@prisma/client";
-import { TRPCError } from "@trpc/server";
-import type { MemberRole } from "@/types/raci";
+import { type PrismaClient } from '@prisma/client'
+import { TRPCError } from '@trpc/server'
+import type { MemberRole } from '@/types/raci'
 
 export interface TenantContext {
-  organizationId: string;
-  userId: string;
-  memberId: string;
-  memberRole: MemberRole;
+  organizationId: string
+  userId: string
+  memberId: string
+  memberRole: MemberRole
 }
 
 /**
@@ -18,7 +18,7 @@ export interface TenantContext {
 export async function getOrganizationMembership(
   db: PrismaClient,
   organizationId: string,
-  userId: string,
+  userId: string
 ) {
   const member = await db.member.findUnique({
     where: {
@@ -31,23 +31,23 @@ export async function getOrganizationMembership(
       organization: true,
       department: true,
     },
-  });
+  })
 
   if (!member) {
     throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "You are not a member of this organization",
-    });
+      code: 'FORBIDDEN',
+      message: 'You are not a member of this organization',
+    })
   }
 
-  if (member.status !== "ACTIVE") {
+  if (member.status !== 'ACTIVE') {
     throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Your membership is not active",
-    });
+      code: 'FORBIDDEN',
+      message: 'Your membership is not active',
+    })
   }
 
-  return member;
+  return member
 }
 
 /**
@@ -56,16 +56,16 @@ export async function getOrganizationMembership(
 export async function verifyOrganizationAccess(
   db: PrismaClient,
   organizationId: string,
-  userId: string,
+  userId: string
 ): Promise<TenantContext> {
-  const member = await getOrganizationMembership(db, organizationId, userId);
+  const member = await getOrganizationMembership(db, organizationId, userId)
 
   return {
     organizationId,
     userId,
     memberId: member.id,
     memberRole: member.role as MemberRole,
-  };
+  }
 }
 
 /**
@@ -75,25 +75,25 @@ export async function verifyMinimumRole(
   db: PrismaClient,
   organizationId: string,
   userId: string,
-  minimumRole: MemberRole,
+  minimumRole: MemberRole
 ) {
-  const member = await getOrganizationMembership(db, organizationId, userId);
+  const member = await getOrganizationMembership(db, organizationId, userId)
 
   const roleHierarchy: Record<MemberRole, number> = {
     OWNER: 4,
     ADMIN: 3,
     MEMBER: 2,
     VIEWER: 1,
-  };
+  }
 
   if (roleHierarchy[member.role as MemberRole] < roleHierarchy[minimumRole]) {
     throw new TRPCError({
-      code: "FORBIDDEN",
+      code: 'FORBIDDEN',
       message: `This action requires ${minimumRole} role or higher`,
-    });
+    })
   }
 
-  return member;
+  return member
 }
 
 /**
@@ -101,48 +101,48 @@ export async function verifyMinimumRole(
  */
 export async function verifyResourceOwnership(
   db: PrismaClient,
-  resourceType: "project" | "matrix" | "template",
+  resourceType: 'project' | 'matrix' | 'template',
   resourceId: string,
-  organizationId: string,
+  organizationId: string
 ) {
-  let resource;
+  let resource
 
   switch (resourceType) {
-    case "project":
+    case 'project':
       resource = await db.project.findUnique({
         where: { id: resourceId },
         select: { organizationId: true },
-      });
-      break;
-    case "matrix":
+      })
+      break
+    case 'matrix':
       resource = await db.rACIMatrix.findUnique({
         where: { id: resourceId },
         select: { organizationId: true },
-      });
-      break;
-    case "template":
+      })
+      break
+    case 'template':
       resource = await db.template.findUnique({
         where: { id: resourceId },
         select: { organizationId: true },
-      });
-      break;
+      })
+      break
   }
 
   if (!resource) {
     throw new TRPCError({
-      code: "NOT_FOUND",
+      code: 'NOT_FOUND',
       message: `${resourceType} not found`,
-    });
+    })
   }
 
   if (resource.organizationId !== organizationId) {
     throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "You do not have access to this resource",
-    });
+      code: 'FORBIDDEN',
+      message: 'You do not have access to this resource',
+    })
   }
 
-  return true;
+  return true
 }
 
 /**
@@ -152,19 +152,19 @@ export async function getUserOrganizations(db: PrismaClient, userId: string) {
   const memberships = await db.member.findMany({
     where: {
       userId,
-      status: "ACTIVE",
+      status: 'ACTIVE',
     },
     include: {
       organization: true,
     },
     orderBy: {
-      joinedAt: "desc",
+      joinedAt: 'desc',
     },
-  });
+  })
 
   return memberships.map((m) => ({
     ...m.organization,
     memberRole: m.role as MemberRole,
     memberId: m.id,
-  }));
+  }))
 }

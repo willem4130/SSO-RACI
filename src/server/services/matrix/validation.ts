@@ -1,29 +1,29 @@
 // RACI Matrix Validation Service - Enhanced Phase 1.2
 // Advanced business rules enforcement, conflict detection, and smart suggestions
 
-import type { PrismaClient } from "@prisma/client";
-import type { ValidationError, ValidationResult, RACIRole } from "@/types/raci";
+import type { PrismaClient } from '@prisma/client'
+import type { ValidationError, ValidationResult, RACIRole } from '@/types/raci'
 
 // Enhanced validation types
 export interface ValidationSuggestion {
-  taskId: string;
-  taskName: string;
-  type: "OPTIMIZE" | "REDISTRIBUTE" | "SIMPLIFY" | "CLARIFY";
-  message: string;
-  action: string;
-  impact: "high" | "medium" | "low";
+  taskId: string
+  taskName: string
+  type: 'OPTIMIZE' | 'REDISTRIBUTE' | 'SIMPLIFY' | 'CLARIFY'
+  message: string
+  action: string
+  impact: 'high' | 'medium' | 'low'
 }
 
 export interface EnhancedValidationResult extends ValidationResult {
-  suggestions: ValidationSuggestion[];
-  healthScore: number; // 0-100
+  suggestions: ValidationSuggestion[]
+  healthScore: number // 0-100
   metrics: {
-    totalTasks: number;
-    validTasks: number;
-    tasksCoverage: number; // % of tasks with proper assignments
-    avgAssignmentsPerTask: number;
-    avgAssignmentsPerMember: number;
-  };
+    totalTasks: number
+    validTasks: number
+    tasksCoverage: number // % of tasks with proper assignments
+    avgAssignmentsPerTask: number
+    avgAssignmentsPerMember: number
+  }
 }
 
 /**
@@ -32,7 +32,7 @@ export interface EnhancedValidationResult extends ValidationResult {
  */
 export async function validateRACIMatrix(
   db: PrismaClient,
-  matrixId: string,
+  matrixId: string
 ): Promise<ValidationResult> {
   const matrix = await db.rACIMatrix.findUnique({
     where: { id: matrixId },
@@ -49,107 +49,103 @@ export async function validateRACIMatrix(
           archivedAt: null,
         },
         orderBy: {
-          orderIndex: "asc",
+          orderIndex: 'asc',
         },
       },
     },
-  });
+  })
 
   if (!matrix) {
     return {
       isValid: false,
       errors: [
         {
-          taskId: "",
-          taskName: "N/A",
-          type: "MISSING_ACCOUNTABLE",
-          message: "Matrix not found",
-          severity: "error",
+          taskId: '',
+          taskName: 'N/A',
+          type: 'MISSING_ACCOUNTABLE',
+          message: 'Matrix not found',
+          severity: 'error',
         },
       ],
       warnings: [],
-    };
+    }
   }
 
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
   // Validate each task
   for (const task of matrix.tasks) {
-    const taskValidation = validateTask(task);
-    errors.push(...taskValidation.errors);
-    warnings.push(...taskValidation.warnings);
+    const taskValidation = validateTask(task)
+    errors.push(...taskValidation.errors)
+    warnings.push(...taskValidation.warnings)
   }
 
   // Check for workload distribution
-  const workloadWarnings = await validateWorkloadDistribution(db, matrixId);
-  warnings.push(...workloadWarnings);
+  const workloadWarnings = await validateWorkloadDistribution(db, matrixId)
+  warnings.push(...workloadWarnings)
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
  * Validate a single task's RACI assignments
  */
 function validateTask(task: {
-  id: string;
-  name: string;
+  id: string
+  name: string
   assignments: Array<{
-    id: string;
-    raciRole: string;
-    member: { id: string; name: string };
-  }>;
+    id: string
+    raciRole: string
+    member: { id: string; name: string }
+  }>
 }): ValidationResult {
-  const errors: ValidationError[] = [];
-  const warnings: ValidationError[] = [];
+  const errors: ValidationError[] = []
+  const warnings: ValidationError[] = []
 
   // RULE 1: Exactly ONE Accountable per task
-  const accountableAssignments = task.assignments.filter(
-    (a) => a.raciRole === "ACCOUNTABLE",
-  );
+  const accountableAssignments = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE')
 
   if (accountableAssignments.length === 0) {
     errors.push({
       taskId: task.id,
       taskName: task.name,
-      type: "MISSING_ACCOUNTABLE",
+      type: 'MISSING_ACCOUNTABLE',
       message: `Task "${task.name}" has no Accountable person assigned`,
-      severity: "error",
-    });
+      severity: 'error',
+    })
   } else if (accountableAssignments.length > 1) {
     errors.push({
       taskId: task.id,
       taskName: task.name,
-      type: "MULTIPLE_ACCOUNTABLE",
-      message: `Task "${task.name}" has multiple Accountable people (${accountableAssignments.map((a) => a.member.name).join(", ")})`,
-      severity: "error",
-    });
+      type: 'MULTIPLE_ACCOUNTABLE',
+      message: `Task "${task.name}" has multiple Accountable people (${accountableAssignments.map((a) => a.member.name).join(', ')})`,
+      severity: 'error',
+    })
   }
 
   // RULE 2: At least ONE Responsible per task
-  const responsibleAssignments = task.assignments.filter(
-    (a) => a.raciRole === "RESPONSIBLE",
-  );
+  const responsibleAssignments = task.assignments.filter((a) => a.raciRole === 'RESPONSIBLE')
 
   if (responsibleAssignments.length === 0) {
     warnings.push({
       taskId: task.id,
       taskName: task.name,
-      type: "MISSING_RESPONSIBLE",
+      type: 'MISSING_RESPONSIBLE',
       message: `Task "${task.name}" has no Responsible person assigned`,
-      severity: "warning",
-    });
+      severity: 'warning',
+    })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
     warnings,
-  };
+  }
 }
 
 /**
@@ -158,9 +154,9 @@ function validateTask(task: {
  */
 async function validateWorkloadDistribution(
   db: PrismaClient,
-  matrixId: string,
+  matrixId: string
 ): Promise<ValidationError[]> {
-  const warnings: ValidationError[] = [];
+  const warnings: ValidationError[] = []
 
   // Get all assignments for this matrix
   const assignments = await db.assignment.findMany({
@@ -174,18 +170,18 @@ async function validateWorkloadDistribution(
       member: true,
       task: true,
     },
-  });
+  })
 
   // Group by member and count assignments
   const memberAssignments = new Map<
     string,
     {
-      name: string;
-      responsible: number;
-      accountable: number;
-      total: number;
+      name: string
+      responsible: number
+      accountable: number
+      total: number
     }
-  >();
+  >()
 
   for (const assignment of assignments) {
     const existing = memberAssignments.get(assignment.memberId) || {
@@ -193,42 +189,42 @@ async function validateWorkloadDistribution(
       responsible: 0,
       accountable: 0,
       total: 0,
-    };
+    }
 
-    existing.total++;
-    if (assignment.raciRole === "RESPONSIBLE") existing.responsible++;
-    if (assignment.raciRole === "ACCOUNTABLE") existing.accountable++;
+    existing.total++
+    if (assignment.raciRole === 'RESPONSIBLE') existing.responsible++
+    if (assignment.raciRole === 'ACCOUNTABLE') existing.accountable++
 
-    memberAssignments.set(assignment.memberId, existing);
+    memberAssignments.set(assignment.memberId, existing)
   }
 
   // Warn if member has too many assignments (configurable threshold)
-  const OVERLOAD_THRESHOLD = 10;
-  const ACCOUNTABLE_THRESHOLD = 5;
+  const OVERLOAD_THRESHOLD = 10
+  const ACCOUNTABLE_THRESHOLD = 5
 
   for (const [memberId, stats] of memberAssignments) {
     if (stats.total > OVERLOAD_THRESHOLD) {
       warnings.push({
-        taskId: "",
-        taskName: "Multiple tasks",
-        type: "OVERLOAD_WARNING",
+        taskId: '',
+        taskName: 'Multiple tasks',
+        type: 'OVERLOAD_WARNING',
         message: `${stats.name} has ${stats.total} assignments (threshold: ${OVERLOAD_THRESHOLD})`,
-        severity: "warning",
-      });
+        severity: 'warning',
+      })
     }
 
     if (stats.accountable > ACCOUNTABLE_THRESHOLD) {
       warnings.push({
-        taskId: "",
-        taskName: "Multiple tasks",
-        type: "OVERLOAD_WARNING",
+        taskId: '',
+        taskName: 'Multiple tasks',
+        type: 'OVERLOAD_WARNING',
         message: `${stats.name} is Accountable for ${stats.accountable} tasks (threshold: ${ACCOUNTABLE_THRESHOLD})`,
-        severity: "warning",
-      });
+        severity: 'warning',
+      })
     }
   }
 
-  return warnings;
+  return warnings
 }
 
 /**
@@ -238,7 +234,7 @@ export async function validateAssignment(
   db: PrismaClient,
   taskId: string,
   memberId: string,
-  raciRole: RACIRole,
+  raciRole: RACIRole
 ): Promise<{ valid: boolean; error?: string }> {
   // Check if assignment already exists
   const existing = await db.assignment.findUnique({
@@ -249,36 +245,36 @@ export async function validateAssignment(
         raciRole,
       },
     },
-  });
+  })
 
   if (existing) {
     return {
       valid: false,
-      error: "This assignment already exists",
-    };
+      error: 'This assignment already exists',
+    }
   }
 
   // If ACCOUNTABLE, check if another Accountable exists
-  if (raciRole === "ACCOUNTABLE") {
+  if (raciRole === 'ACCOUNTABLE') {
     const existingAccountable = await db.assignment.findFirst({
       where: {
         taskId,
-        raciRole: "ACCOUNTABLE",
+        raciRole: 'ACCOUNTABLE',
       },
       include: {
         member: true,
       },
-    });
+    })
 
     if (existingAccountable) {
       return {
         valid: false,
         error: `Task already has an Accountable person: ${existingAccountable.member.name}`,
-      };
+      }
     }
   }
 
-  return { valid: true };
+  return { valid: true }
 }
 
 /**
@@ -286,28 +282,28 @@ export async function validateAssignment(
  */
 export async function getValidationSummary(
   db: PrismaClient,
-  matrixId: string,
+  matrixId: string
 ): Promise<{
-  totalTasks: number;
-  validTasks: number;
-  errorCount: number;
-  warningCount: number;
+  totalTasks: number
+  validTasks: number
+  errorCount: number
+  warningCount: number
 }> {
-  const validation = await validateRACIMatrix(db, matrixId);
+  const validation = await validateRACIMatrix(db, matrixId)
 
   const tasks = await db.task.findMany({
     where: {
       matrixId,
       archivedAt: null,
     },
-  });
+  })
 
   return {
     totalTasks: tasks.length,
     validTasks: tasks.length - validation.errors.length,
     errorCount: validation.errors.length,
     warningCount: validation.warnings.length,
-  };
+  }
 }
 
 // ============================================================================
@@ -319,10 +315,10 @@ export async function getValidationSummary(
  */
 export async function validateMatrixEnhanced(
   db: PrismaClient,
-  matrixId: string,
+  matrixId: string
 ): Promise<EnhancedValidationResult> {
   // Get base validation
-  const baseValidation = await validateRACIMatrix(db, matrixId);
+  const baseValidation = await validateRACIMatrix(db, matrixId)
 
   // Get matrix data for suggestions
   const matrix = await db.rACIMatrix.findUnique({
@@ -340,11 +336,11 @@ export async function validateMatrixEnhanced(
           archivedAt: null,
         },
         orderBy: {
-          orderIndex: "asc",
+          orderIndex: 'asc',
         },
       },
     },
-  });
+  })
 
   if (!matrix) {
     return {
@@ -358,28 +354,28 @@ export async function validateMatrixEnhanced(
         avgAssignmentsPerTask: 0,
         avgAssignmentsPerMember: 0,
       },
-    };
+    }
   }
 
   // Generate smart suggestions
-  const suggestions = await generateSmartSuggestions(db, matrix);
+  const suggestions = await generateSmartSuggestions(db, matrix)
 
   // Calculate health score
   const healthScore = calculateMatrixHealthScore(
     matrix.tasks,
     baseValidation.errors.length,
-    baseValidation.warnings.length,
-  );
+    baseValidation.warnings.length
+  )
 
   // Calculate metrics
-  const metrics = calculateMatrixMetrics(matrix.tasks);
+  const metrics = calculateMatrixMetrics(matrix.tasks)
 
   return {
     ...baseValidation,
     suggestions,
     healthScore,
     metrics,
-  };
+  }
 }
 
 /**
@@ -388,38 +384,38 @@ export async function validateMatrixEnhanced(
 async function generateSmartSuggestions(
   db: PrismaClient,
   matrix: {
-    id: string;
+    id: string
     tasks: Array<{
-      id: string;
-      name: string;
+      id: string
+      name: string
       assignments: Array<{
-        id: string;
-        raciRole: string;
-        member: { id: string; name: string };
-      }>;
-    }>;
-  },
+        id: string
+        raciRole: string
+        member: { id: string; name: string }
+      }>
+    }>
+  }
 ): Promise<ValidationSuggestion[]> {
-  const suggestions: ValidationSuggestion[] = [];
+  const suggestions: ValidationSuggestion[] = []
 
   for (const task of matrix.tasks) {
     const roles = {
-      responsible: task.assignments.filter((a) => a.raciRole === "RESPONSIBLE").length,
-      accountable: task.assignments.filter((a) => a.raciRole === "ACCOUNTABLE").length,
-      consulted: task.assignments.filter((a) => a.raciRole === "CONSULTED").length,
-      informed: task.assignments.filter((a) => a.raciRole === "INFORMED").length,
-    };
+      responsible: task.assignments.filter((a) => a.raciRole === 'RESPONSIBLE').length,
+      accountable: task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE').length,
+      consulted: task.assignments.filter((a) => a.raciRole === 'CONSULTED').length,
+      informed: task.assignments.filter((a) => a.raciRole === 'INFORMED').length,
+    }
 
     // Suggestion: Too many Consulted (slows down decision-making)
     if (roles.consulted > 4) {
       suggestions.push({
         taskId: task.id,
         taskName: task.name,
-        type: "OPTIMIZE",
+        type: 'OPTIMIZE',
         message: `Task has ${roles.consulted} people marked as Consulted, which may slow decision-making`,
-        action: "Consider moving some Consulted stakeholders to Informed",
-        impact: "medium",
-      });
+        action: 'Consider moving some Consulted stakeholders to Informed',
+        impact: 'medium',
+      })
     }
 
     // Suggestion: No communication (Consulted or Informed)
@@ -427,11 +423,11 @@ async function generateSmartSuggestions(
       suggestions.push({
         taskId: task.id,
         taskName: task.name,
-        type: "CLARIFY",
-        message: "Task has no communication stakeholders (Consulted or Informed)",
-        action: "Consider who should be consulted for input or informed of progress",
-        impact: "low",
-      });
+        type: 'CLARIFY',
+        message: 'Task has no communication stakeholders (Consulted or Informed)',
+        action: 'Consider who should be consulted for input or informed of progress',
+        impact: 'low',
+      })
     }
 
     // Suggestion: Too many Responsible (potential confusion)
@@ -439,11 +435,11 @@ async function generateSmartSuggestions(
       suggestions.push({
         taskId: task.id,
         taskName: task.name,
-        type: "SIMPLIFY",
+        type: 'SIMPLIFY',
         message: `Task has ${roles.responsible} Responsible people, which may cause confusion`,
-        action: "Consider breaking this task into subtasks or consolidating responsibilities",
-        impact: "high",
-      });
+        action: 'Consider breaking this task into subtasks or consolidating responsibilities',
+        impact: 'high',
+      })
     }
 
     // Suggestion: Only Accountable (no doers)
@@ -451,11 +447,12 @@ async function generateSmartSuggestions(
       suggestions.push({
         taskId: task.id,
         taskName: task.name,
-        type: "CLARIFY",
-        message: "Task only has an Accountable person with no other roles",
-        action: "Consider if this person should also be Responsible, or if others should be involved",
-        impact: "medium",
-      });
+        type: 'CLARIFY',
+        message: 'Task only has an Accountable person with no other roles',
+        action:
+          'Consider if this person should also be Responsible, or if others should be involved',
+        impact: 'medium',
+      })
     }
 
     // Suggestion: Excessive total assignments
@@ -463,11 +460,11 @@ async function generateSmartSuggestions(
       suggestions.push({
         taskId: task.id,
         taskName: task.name,
-        type: "SIMPLIFY",
+        type: 'SIMPLIFY',
         message: `Task has ${task.assignments.length} total assignments`,
-        action: "This task may be too complex. Consider breaking it down or reducing stakeholders",
-        impact: "high",
-      });
+        action: 'This task may be too complex. Consider breaking it down or reducing stakeholders',
+        impact: 'high',
+      })
     }
   }
 
@@ -475,7 +472,7 @@ async function generateSmartSuggestions(
   const memberWorkload = new Map<
     string,
     { name: string; responsible: number; accountable: number; total: number }
-  >();
+  >()
 
   for (const task of matrix.tasks) {
     for (const assignment of task.assignments) {
@@ -484,13 +481,13 @@ async function generateSmartSuggestions(
         responsible: 0,
         accountable: 0,
         total: 0,
-      };
+      }
 
-      existing.total++;
-      if (assignment.raciRole === "RESPONSIBLE") existing.responsible++;
-      if (assignment.raciRole === "ACCOUNTABLE") existing.accountable++;
+      existing.total++
+      if (assignment.raciRole === 'RESPONSIBLE') existing.responsible++
+      if (assignment.raciRole === 'ACCOUNTABLE') existing.accountable++
 
-      memberWorkload.set(assignment.member.id, existing);
+      memberWorkload.set(assignment.member.id, existing)
     }
   }
 
@@ -498,28 +495,28 @@ async function generateSmartSuggestions(
   for (const [memberId, stats] of memberWorkload) {
     if (stats.total > 12) {
       suggestions.push({
-        taskId: "",
-        taskName: "Multiple tasks",
-        type: "REDISTRIBUTE",
+        taskId: '',
+        taskName: 'Multiple tasks',
+        type: 'REDISTRIBUTE',
         message: `${stats.name} has ${stats.total} total assignments (${stats.responsible} Responsible, ${stats.accountable} Accountable)`,
-        action: "Consider redistributing some assignments to balance workload",
-        impact: "high",
-      });
+        action: 'Consider redistributing some assignments to balance workload',
+        impact: 'high',
+      })
     }
 
     if (stats.accountable > 6) {
       suggestions.push({
-        taskId: "",
-        taskName: "Multiple tasks",
-        type: "REDISTRIBUTE",
+        taskId: '',
+        taskName: 'Multiple tasks',
+        type: 'REDISTRIBUTE',
         message: `${stats.name} is Accountable for ${stats.accountable} tasks`,
-        action: "This person has too much ownership. Consider delegating some accountability",
-        impact: "high",
-      });
+        action: 'This person has too much ownership. Consider delegating some accountability',
+        impact: 'high',
+      })
     }
   }
 
-  return suggestions;
+  return suggestions
 }
 
 /**
@@ -527,31 +524,31 @@ async function generateSmartSuggestions(
  */
 function calculateMatrixHealthScore(
   tasks: Array<{
-    id: string;
-    assignments: Array<{ raciRole: string }>;
+    id: string
+    assignments: Array<{ raciRole: string }>
   }>,
   errorCount: number,
-  warningCount: number,
+  warningCount: number
 ): number {
-  if (tasks.length === 0) return 100;
+  if (tasks.length === 0) return 100
 
-  let score = 100;
+  let score = 100
 
   // Deduct points for errors (critical issues)
-  score -= errorCount * 10;
+  score -= errorCount * 10
 
   // Deduct points for warnings (minor issues)
-  score -= warningCount * 3;
+  score -= warningCount * 3
 
   // Bonus for complete coverage
-  const tasksWithAssignments = tasks.filter((t) => t.assignments.length > 0).length;
-  const coverage = tasksWithAssignments / tasks.length;
+  const tasksWithAssignments = tasks.filter((t) => t.assignments.length > 0).length
+  const coverage = tasksWithAssignments / tasks.length
   if (coverage === 1) {
-    score += 10;
+    score += 10
   }
 
   // Floor at 0, cap at 100
-  return Math.max(0, Math.min(100, score));
+  return Math.max(0, Math.min(100, score))
 }
 
 /**
@@ -559,42 +556,41 @@ function calculateMatrixHealthScore(
  */
 function calculateMatrixMetrics(
   tasks: Array<{
-    id: string;
+    id: string
     assignments: Array<{
-      raciRole: string;
-      member: { id: string };
-    }>;
-  }>,
+      raciRole: string
+      member: { id: string }
+    }>
+  }>
 ): {
-  totalTasks: number;
-  validTasks: number;
-  tasksCoverage: number;
-  avgAssignmentsPerTask: number;
-  avgAssignmentsPerMember: number;
+  totalTasks: number
+  validTasks: number
+  tasksCoverage: number
+  avgAssignmentsPerTask: number
+  avgAssignmentsPerMember: number
 } {
-  const totalTasks = tasks.length;
-  const tasksWithAssignments = tasks.filter((t) => t.assignments.length > 0).length;
+  const totalTasks = tasks.length
+  const tasksWithAssignments = tasks.filter((t) => t.assignments.length > 0).length
 
   // Count valid tasks (have 1 Accountable and 1+ Responsible)
   const validTasks = tasks.filter((task) => {
-    const accountable = task.assignments.filter((a) => a.raciRole === "ACCOUNTABLE").length;
-    const responsible = task.assignments.filter((a) => a.raciRole === "RESPONSIBLE").length;
-    return accountable === 1 && responsible >= 1;
-  }).length;
+    const accountable = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE').length
+    const responsible = task.assignments.filter((a) => a.raciRole === 'RESPONSIBLE').length
+    return accountable === 1 && responsible >= 1
+  }).length
 
-  const totalAssignments = tasks.reduce((sum, task) => sum + task.assignments.length, 0);
-  const avgAssignmentsPerTask = totalTasks > 0 ? totalAssignments / totalTasks : 0;
+  const totalAssignments = tasks.reduce((sum, task) => sum + task.assignments.length, 0)
+  const avgAssignmentsPerTask = totalTasks > 0 ? totalAssignments / totalTasks : 0
 
   // Calculate unique members
-  const uniqueMembers = new Set<string>();
+  const uniqueMembers = new Set<string>()
   for (const task of tasks) {
     for (const assignment of task.assignments) {
-      uniqueMembers.add(assignment.member.id);
+      uniqueMembers.add(assignment.member.id)
     }
   }
 
-  const avgAssignmentsPerMember =
-    uniqueMembers.size > 0 ? totalAssignments / uniqueMembers.size : 0;
+  const avgAssignmentsPerMember = uniqueMembers.size > 0 ? totalAssignments / uniqueMembers.size : 0
 
   return {
     totalTasks,
@@ -602,7 +598,7 @@ function calculateMatrixMetrics(
     tasksCoverage: totalTasks > 0 ? (tasksWithAssignments / totalTasks) * 100 : 0,
     avgAssignmentsPerTask: Math.round(avgAssignmentsPerTask * 10) / 10,
     avgAssignmentsPerMember: Math.round(avgAssignmentsPerMember * 10) / 10,
-  };
+  }
 }
 
 /**
@@ -610,15 +606,15 @@ function calculateMatrixMetrics(
  */
 export async function detectConflicts(
   db: PrismaClient,
-  matrixId: string,
+  matrixId: string
 ): Promise<{
   conflicts: Array<{
-    type: "MULTIPLE_ACCOUNTABLE" | "MISSING_ACCOUNTABLE" | "MISSING_RESPONSIBLE" | "ROLE_OVERLOAD";
-    taskId: string;
-    taskName: string;
-    details: string;
-    severity: "critical" | "high" | "medium";
-  }>;
+    type: 'MULTIPLE_ACCOUNTABLE' | 'MISSING_ACCOUNTABLE' | 'MISSING_RESPONSIBLE' | 'ROLE_OVERLOAD'
+    taskId: string
+    taskName: string
+    details: string
+    severity: 'critical' | 'high' | 'medium'
+  }>
 }> {
   const matrix = await db.rACIMatrix.findUnique({
     where: { id: matrixId },
@@ -636,64 +632,64 @@ export async function detectConflicts(
         },
       },
     },
-  });
+  })
 
   if (!matrix) {
-    return { conflicts: [] };
+    return { conflicts: [] }
   }
 
   const conflicts: Array<{
-    type: "MULTIPLE_ACCOUNTABLE" | "MISSING_ACCOUNTABLE" | "MISSING_RESPONSIBLE" | "ROLE_OVERLOAD";
-    taskId: string;
-    taskName: string;
-    details: string;
-    severity: "critical" | "high" | "medium";
-  }> = [];
+    type: 'MULTIPLE_ACCOUNTABLE' | 'MISSING_ACCOUNTABLE' | 'MISSING_RESPONSIBLE' | 'ROLE_OVERLOAD'
+    taskId: string
+    taskName: string
+    details: string
+    severity: 'critical' | 'high' | 'medium'
+  }> = []
 
   for (const task of matrix.tasks) {
-    const accountable = task.assignments.filter((a) => a.raciRole === "ACCOUNTABLE");
-    const responsible = task.assignments.filter((a) => a.raciRole === "RESPONSIBLE");
+    const accountable = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE')
+    const responsible = task.assignments.filter((a) => a.raciRole === 'RESPONSIBLE')
 
     if (accountable.length === 0) {
       conflicts.push({
-        type: "MISSING_ACCOUNTABLE",
+        type: 'MISSING_ACCOUNTABLE',
         taskId: task.id,
         taskName: task.name,
-        details: "No one is accountable for this task",
-        severity: "critical",
-      });
+        details: 'No one is accountable for this task',
+        severity: 'critical',
+      })
     }
 
     if (accountable.length > 1) {
       conflicts.push({
-        type: "MULTIPLE_ACCOUNTABLE",
+        type: 'MULTIPLE_ACCOUNTABLE',
         taskId: task.id,
         taskName: task.name,
-        details: `Multiple people accountable: ${accountable.map((a) => a.member.name).join(", ")}`,
-        severity: "critical",
-      });
+        details: `Multiple people accountable: ${accountable.map((a) => a.member.name).join(', ')}`,
+        severity: 'critical',
+      })
     }
 
     if (responsible.length === 0) {
       conflicts.push({
-        type: "MISSING_RESPONSIBLE",
+        type: 'MISSING_RESPONSIBLE',
         taskId: task.id,
         taskName: task.name,
-        details: "No one is responsible for doing this task",
-        severity: "high",
-      });
+        details: 'No one is responsible for doing this task',
+        severity: 'high',
+      })
     }
 
     if (task.assignments.length > 15) {
       conflicts.push({
-        type: "ROLE_OVERLOAD",
+        type: 'ROLE_OVERLOAD',
         taskId: task.id,
         taskName: task.name,
         details: `${task.assignments.length} total assignments - task may be too complex`,
-        severity: "medium",
-      });
+        severity: 'medium',
+      })
     }
   }
 
-  return { conflicts };
+  return { conflicts }
 }

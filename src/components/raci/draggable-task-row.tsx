@@ -1,21 +1,17 @@
-'use client';
+'use client'
 
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { GripVertical } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { GripVertical } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface DraggableTaskRowProps {
-  id: string;
-  children: React.ReactNode;
-  isDragging?: boolean;
+  id: string
+  children: React.ReactNode
+  isDragging?: boolean
 }
 
-export function DraggableTaskRow({
-  id,
-  children,
-  isDragging = false,
-}: DraggableTaskRowProps) {
+export function DraggableTaskRow({ id, children, isDragging = false }: DraggableTaskRowProps) {
   const {
     attributes,
     listeners,
@@ -23,23 +19,20 @@ export function DraggableTaskRow({
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id });
+  } = useSortable({ id })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
+  }
 
-  const isBeingDragged = isDragging || isSortableDragging;
+  const isBeingDragged = isDragging || isSortableDragging
 
   return (
     <tr
       ref={setNodeRef}
       style={style}
-      className={cn(
-        'border-b last:border-b-0 relative',
-        isBeingDragged && 'opacity-50 bg-blue-50'
-      )}
+      className={cn('border-b last:border-b-0 relative', isBeingDragged && 'opacity-50 bg-blue-50')}
     >
       {/* Drag Handle Cell */}
       <td
@@ -53,5 +46,5 @@ export function DraggableTaskRow({
       </td>
       {children}
     </tr>
-  );
+  )
 }

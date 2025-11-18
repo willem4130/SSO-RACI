@@ -1,19 +1,13 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { Plus, FolderOpen, Users, Grid3x3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { useState } from 'react'
+import Link from 'next/link'
+import { Plus, FolderOpen, Users, Grid3x3 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function DashboardPage() {
-  const [showCreateOrg, setShowCreateOrg] = useState(false);
+  const [showCreateOrg, setShowCreateOrg] = useState(false)
 
   // Mock data - this will be replaced with tRPC queries
   const organizations = [
@@ -24,7 +18,7 @@ export default function DashboardPage() {
       matrixCount: 12,
       memberCount: 25,
     },
-  ];
+  ]
 
   return (
     <div className="container mx-auto py-8">
@@ -93,9 +87,7 @@ export default function DashboardPage() {
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="text-lg">Browse Templates</CardTitle>
-                <CardDescription>
-                  Start from pre-built RACI templates
-                </CardDescription>
+                <CardDescription>Start from pre-built RACI templates</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -103,9 +95,7 @@ export default function DashboardPage() {
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="text-lg">Create Organization</CardTitle>
-                <CardDescription>
-                  Set up a new workspace
-                </CardDescription>
+                <CardDescription>Set up a new workspace</CardDescription>
               </CardHeader>
             </Card>
           </Link>
@@ -113,14 +103,12 @@ export default function DashboardPage() {
             <Card className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="text-lg">Learn More</CardTitle>
-                <CardDescription>
-                  Discover RACI best practices
-                </CardDescription>
+                <CardDescription>Discover RACI best practices</CardDescription>
               </CardHeader>
             </Card>
           </Link>
         </div>
       </div>
     </div>
-  );
+  )
 }

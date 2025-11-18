@@ -1,62 +1,54 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { api } from '@/trpc/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { useState } from 'react'
+import { api } from '@/trpc/react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { toast } from 'sonner'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Building2, Globe, Clock, Archive } from 'lucide-react';
+} from '@/components/ui/select'
+import { Building2, Globe, Clock, Archive } from 'lucide-react'
 
 interface OrganizationSettingsProps {
-  organizationId: string;
+  organizationId: string
 }
 
-export function OrganizationSettings({
-  organizationId,
-}: OrganizationSettingsProps) {
+export function OrganizationSettings({ organizationId }: OrganizationSettingsProps) {
   const { data: organization, refetch } = api.organization.getById.useQuery({
     id: organizationId,
-  });
+  })
 
-  const [name, setName] = useState(organization?.name || '');
-  const [locale, setLocale] = useState('en');
-  const [timezone, setTimezone] = useState('UTC');
+  const [name, setName] = useState(organization?.name || '')
+  const [locale, setLocale] = useState('en')
+  const [timezone, setTimezone] = useState('UTC')
 
   const updateMutation = api.organization.update.useMutation({
     onSuccess: () => {
-      toast.success('Organization settings updated successfully');
-      refetch();
+      toast.success('Organization settings updated successfully')
+      refetch()
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Failed to update settings');
+      toast.error(error.message || 'Failed to update settings')
     },
-  });
+  })
 
   const archiveMutation = api.organization.archive.useMutation({
     onSuccess: () => {
-      toast.success('Organization archived successfully');
-      window.location.href = '/dashboard';
+      toast.success('Organization archived successfully')
+      window.location.href = '/dashboard'
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Failed to archive organization');
+      toast.error(error.message || 'Failed to archive organization')
     },
-  });
+  })
 
   const handleSave = () => {
     updateMutation.mutate({
@@ -66,21 +58,19 @@ export function OrganizationSettings({
         locale,
         timezone,
       },
-    });
-  };
+    })
+  }
 
   const handleArchive = () => {
     if (
-      confirm(
-        'Are you sure you want to archive this organization? This action can be reversed.'
-      )
+      confirm('Are you sure you want to archive this organization? This action can be reversed.')
     ) {
-      archiveMutation.mutate({ id: organizationId });
+      archiveMutation.mutate({ id: organizationId })
     }
-  };
+  }
 
   if (!organization) {
-    return <div className="text-center py-8">Loading settings...</div>;
+    return <div className="text-center py-8">Loading settings...</div>
   }
 
   return (
@@ -99,9 +89,7 @@ export function OrganizationSettings({
             <Building2 className="h-5 w-5" />
             General
           </CardTitle>
-          <CardDescription>
-            Basic information about your organization
-          </CardDescription>
+          <CardDescription>Basic information about your organization</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -116,12 +104,7 @@ export function OrganizationSettings({
 
           <div className="space-y-2">
             <Label htmlFor="org-slug">Organization Slug</Label>
-            <Input
-              id="org-slug"
-              value={organization.slug}
-              disabled
-              className="bg-muted"
-            />
+            <Input id="org-slug" value={organization.slug} disabled className="bg-muted" />
             <p className="text-sm text-muted-foreground">
               The slug cannot be changed after creation
             </p>
@@ -136,9 +119,7 @@ export function OrganizationSettings({
             <Globe className="h-5 w-5" />
             Localization
           </CardTitle>
-          <CardDescription>
-            Language and regional preferences
-          </CardDescription>
+          <CardDescription>Language and regional preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -165,15 +146,9 @@ export function OrganizationSettings({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="UTC">UTC</SelectItem>
-                <SelectItem value="Europe/Amsterdam">
-                  Europe/Amsterdam (CET)
-                </SelectItem>
-                <SelectItem value="America/New_York">
-                  America/New_York (EST)
-                </SelectItem>
-                <SelectItem value="America/Los_Angeles">
-                  America/Los_Angeles (PST)
-                </SelectItem>
+                <SelectItem value="Europe/Amsterdam">Europe/Amsterdam (CET)</SelectItem>
+                <SelectItem value="America/New_York">America/New_York (EST)</SelectItem>
+                <SelectItem value="America/Los_Angeles">America/Los_Angeles (PST)</SelectItem>
                 <SelectItem value="Asia/Tokyo">Asia/Tokyo (JST)</SelectItem>
               </SelectContent>
             </Select>
@@ -191,21 +166,15 @@ export function OrganizationSettings({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Members</p>
-              <p className="text-2xl font-bold">
-                {organization._count?.members || 0}
-              </p>
+              <p className="text-2xl font-bold">{organization._count?.members || 0}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Projects</p>
-              <p className="text-2xl font-bold">
-                {organization._count?.projects || 0}
-              </p>
+              <p className="text-2xl font-bold">{organization._count?.projects || 0}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Matrices</p>
-              <p className="text-2xl font-bold">
-                {organization._count?.matrices || 0}
-              </p>
+              <p className="text-2xl font-bold">{organization._count?.matrices || 0}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Created</p>
@@ -233,9 +202,7 @@ export function OrganizationSettings({
             <Archive className="h-5 w-5" />
             Danger Zone
           </CardTitle>
-          <CardDescription>
-            Irreversible actions for this organization
-          </CardDescription>
+          <CardDescription>Irreversible actions for this organization</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 border border-destructive/50 rounded-lg bg-destructive/5">
@@ -256,5 +223,5 @@ export function OrganizationSettings({
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

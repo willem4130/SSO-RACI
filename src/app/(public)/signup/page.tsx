@@ -1,12 +1,12 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { api } from '@/trpc/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { api } from '@/trpc/react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
@@ -14,48 +14,48 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from '@/components/ui/card';
-import { toast } from 'sonner';
-import { UserPlus } from 'lucide-react';
+} from '@/components/ui/card'
+import { toast } from 'sonner'
+import { UserPlus } from 'lucide-react'
 
 export default function SignupPage() {
-  const router = useRouter();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
   const signupMutation = api.auth.signup.useMutation({
     onSuccess: () => {
-      toast.success('Account created successfully!');
-      router.push('/dashboard');
-      router.refresh();
+      toast.success('Account created successfully!')
+      router.push('/dashboard')
+      router.refresh()
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Signup failed');
+      toast.error(error.message || 'Signup failed')
     },
-  });
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!name || !email || !password || !confirmPassword) {
-      toast.error('Please fill in all fields');
-      return;
+      toast.error('Please fill in all fields')
+      return
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
+      toast.error('Passwords do not match')
+      return
     }
 
     if (password.length < 8) {
-      toast.error('Password must be at least 8 characters');
-      return;
+      toast.error('Password must be at least 8 characters')
+      return
     }
 
-    signupMutation.mutate({ name, email, password });
-  };
+    signupMutation.mutate({ name, email, password })
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -126,19 +126,12 @@ export default function SignupPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={signupMutation.isPending}
-            >
+            <Button type="submit" className="w-full" disabled={signupMutation.isPending}>
               {signupMutation.isPending ? 'Creating account...' : 'Sign Up'}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
               Already have an account?{' '}
-              <Link
-                href="/login"
-                className="text-primary hover:underline font-medium"
-              >
+              <Link href="/login" className="text-primary hover:underline font-medium">
                 Log in
               </Link>
             </div>
@@ -146,5 +139,5 @@ export default function SignupPage() {
         </form>
       </Card>
     </div>
-  );
+  )
 }

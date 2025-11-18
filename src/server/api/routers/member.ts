@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { TRPCError } from '@trpc/server';
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { TRPCError } from '@trpc/server'
 
 export const memberRouter = createTRPCRouter({
   // List members by organization
@@ -21,8 +21,8 @@ export const memberRouter = createTRPCRouter({
           department: true,
         },
         orderBy: { joinedAt: 'desc' },
-      });
-      return members;
+      })
+      return members
     }),
 
   // Add member to organization
@@ -43,20 +43,20 @@ export const memberRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       // Get user details
       const user = await ctx.db.user.findUnique({
         where: { id: input.userId },
         select: { name: true, email: true },
-      });
+      })
 
       if (!user) {
-        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' });
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'User not found' })
       }
 
       const member = await ctx.db.member.create({
@@ -72,9 +72,9 @@ export const memberRouter = createTRPCRouter({
           user: { select: { name: true, email: true } },
           department: true,
         },
-      });
+      })
 
-      return member;
+      return member
     }),
 
   // Update member role
@@ -90,10 +90,10 @@ export const memberRouter = createTRPCRouter({
       const member = await ctx.db.member.findUnique({
         where: { id: input.memberId },
         include: { organization: true },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
+        throw new TRPCError({ code: 'NOT_FOUND' })
       }
 
       // Check permission
@@ -103,10 +103,10 @@ export const memberRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       return await ctx.db.member.update({
@@ -119,7 +119,7 @@ export const memberRouter = createTRPCRouter({
           user: { select: { name: true, email: true } },
           department: true,
         },
-      });
+      })
     }),
 
   // Remove member
@@ -128,10 +128,10 @@ export const memberRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const member = await ctx.db.member.findUnique({
         where: { id: input.memberId },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
+        throw new TRPCError({ code: 'NOT_FOUND' })
       }
 
       // Check permission
@@ -141,17 +141,17 @@ export const memberRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       await ctx.db.member.delete({
         where: { id: input.memberId },
-      });
+      })
 
-      return { success: true };
+      return { success: true }
     }),
 
   // Invite member by email
@@ -172,16 +172,16 @@ export const memberRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       // Check if user already exists
       const existingUser = await ctx.db.user.findUnique({
         where: { email: input.email },
-      });
+      })
 
       // Check if member already exists in organization
       if (existingUser) {
@@ -192,13 +192,13 @@ export const memberRouter = createTRPCRouter({
               userId: existingUser.id,
             },
           },
-        });
+        })
 
         if (existingMember) {
           throw new TRPCError({
             code: 'CONFLICT',
             message: 'User is already a member of this organization',
-          });
+          })
         }
 
         // Add existing user to organization
@@ -217,7 +217,7 @@ export const memberRouter = createTRPCRouter({
             user: { select: { name: true, email: true } },
             department: true,
           },
-        });
+        })
       }
 
       // User doesn't exist - create invitation
@@ -229,7 +229,7 @@ export const memberRouter = createTRPCRouter({
           name: input.email.split('@')[0],
           password: 'INVITED', // Placeholder - user will set password on signup
         },
-      });
+      })
 
       const member = await ctx.db.member.create({
         data: {
@@ -246,9 +246,9 @@ export const memberRouter = createTRPCRouter({
           user: { select: { name: true, email: true } },
           department: true,
         },
-      });
+      })
 
-      return member;
+      return member
     }),
 
   // Update member status
@@ -262,10 +262,10 @@ export const memberRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const member = await ctx.db.member.findUnique({
         where: { id: input.memberId },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
+        throw new TRPCError({ code: 'NOT_FOUND' })
       }
 
       // Check permission
@@ -275,10 +275,10 @@ export const memberRouter = createTRPCRouter({
           userId: ctx.session.user.id,
           role: { in: ['OWNER', 'ADMIN'] },
         },
-      });
+      })
 
       if (!hasPermission) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       return await ctx.db.member.update({
@@ -288,6 +288,6 @@ export const memberRouter = createTRPCRouter({
           user: { select: { name: true, email: true } },
           department: true,
         },
-      });
+      })
     }),
-});
+})

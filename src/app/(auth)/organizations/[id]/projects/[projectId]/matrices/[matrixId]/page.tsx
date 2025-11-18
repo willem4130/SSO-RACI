@@ -1,24 +1,43 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Users, Save, Eye, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { RaciMatrixGrid } from '@/components/raci/raci-matrix-grid';
-import { ValidationSummary } from '@/components/raci/validation-summary';
-import type { RaciTask, RaciMember } from '@/types/raci';
-import type { RaciRole } from '@prisma/client';
+import { useState, useEffect } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Plus, Users, Save, Eye, Settings, Activity } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { RaciMatrixGrid } from '@/components/raci/raci-matrix-grid'
+import { ValidationSummary } from '@/components/raci/validation-summary'
+import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard'
+import type { RaciTask, RaciMember, ValidationSuggestion } from '@/types/raci'
+import type { RaciRole } from '@prisma/client'
+import { api } from '@/trpc/react'
 
 export default function MatrixEditorPage() {
-  const params = useParams();
-  const router = useRouter();
-  const orgId = params.id as string;
-  const projectId = params.projectId as string;
-  const matrixId = params.matrixId as string;
+  const params = useParams()
+  const router = useRouter()
+  const orgId = params.id as string
+  const projectId = params.projectId as string
+  const matrixId = params.matrixId as string
 
   // Mock data - will be replaced with tRPC queries
-  const [matrixName] = useState('Sprint Planning Matrix');
-  const [showValidation, setShowValidation] = useState(true);
+  const [matrixName] = useState('Sprint Planning Matrix')
+  const [showValidation, setShowValidation] = useState(true)
+  const [showHealthDashboard, setShowHealthDashboard] = useState(true)
+
+  // Enhanced validation hook
+  const {
+    data: healthData,
+    isLoading: healthLoading,
+    refetch: refetchHealth,
+  } = api.matrix.validateEnhanced.useQuery(
+    {
+      id: matrixId,
+      organizationId: orgId,
+    },
+    {
+      enabled: showHealthDashboard,
+      refetchOnWindowFocus: false,
+    }
+  )
 
   // Sample tasks and members
   const [tasks, setTasks] = useState<RaciTask[]>([
@@ -81,7 +100,7 @@ export default function MatrixEditorPage() {
       priority: 'MEDIUM',
       assignments: [],
     },
-  ]);
+  ])
 
   const members: RaciMember[] = [
     {
@@ -105,7 +124,7 @@ export default function MatrixEditorPage() {
       role: 'MEMBER',
       department: { id: 'd2', name: 'Design', code: 'design' },
     },
-  ];
+  ]
 
   const handleAssignmentChange = async (
     taskId: string,
@@ -116,18 +135,18 @@ export default function MatrixEditorPage() {
     // Update local state
     setTasks((prevTasks) =>
       prevTasks.map((task) => {
-        if (task.id !== taskId) return task;
+        if (task.id !== taskId) return task
 
-        let newAssignments = [...task.assignments];
+        let newAssignments = [...task.assignments]
 
         if (role === null) {
           // Remove assignment
-          newAssignments = newAssignments.filter((a) => a.id !== assignmentId);
+          newAssignments = newAssignments.filter((a) => a.id !== assignmentId)
         } else if (assignmentId) {
           // Update existing assignment
           newAssignments = newAssignments.map((a) =>
             a.id === assignmentId ? { ...a, raciRole: role } : a
-          );
+          )
         } else {
           // Add new assignment
           newAssignments.push({
@@ -135,26 +154,24 @@ export default function MatrixEditorPage() {
             taskId,
             memberId,
             raciRole: role,
-          });
+          })
         }
 
-        return { ...task, assignments: newAssignments };
+        return { ...task, assignments: newAssignments }
       })
-    );
+    )
 
     // TODO: Call tRPC mutation to persist change
-    console.log('Assignment changed:', { taskId, memberId, role, assignmentId });
-  };
+    console.log('Assignment changed:', { taskId, memberId, role, assignmentId })
+  }
 
   const handleTaskUpdate = (taskId: string, updates: Partial<RaciTask>) => {
     setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, ...updates } : task
-      )
-    );
+      prevTasks.map((task) => (task.id === taskId ? { ...task, ...updates } : task))
+    )
     // TODO: Call tRPC mutation to persist task updates
-    console.log('Task updated:', { taskId, updates });
-  };
+    console.log('Task updated:', { taskId, updates })
+  }
 
   const handleAddTask = () => {
     const newTask: RaciTask = {
@@ -164,15 +181,36 @@ export default function MatrixEditorPage() {
       status: 'NOT_STARTED',
       priority: 'MEDIUM',
       assignments: [],
-    };
-    setTasks([...tasks, newTask]);
-  };
+    }
+    setTasks([...tasks, newTask])
+  }
 
   const handleSave = () => {
     // TODO: Call tRPC mutation to save matrix
-    console.log('Saving matrix...', { tasks });
-    alert('Matrix saved! (This is a mock - will be connected to tRPC)');
-  };
+    console.log('Saving matrix...', { tasks })
+    alert('Matrix saved! (This is a mock - will be connected to tRPC)')
+  }
+
+  // Refresh health data when tasks change
+  useEffect(() => {
+    if (showHealthDashboard) {
+      // Debounce the refetch to avoid too many API calls
+      const timer = setTimeout(() => {
+        void refetchHealth()
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [tasks, showHealthDashboard, refetchHealth])
+
+  const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
+    console.log('Applying suggestion:', suggestion)
+    // TODO: Implement suggestion application logic
+  }
+
+  const handleDismissSuggestion = (suggestion: ValidationSuggestion) => {
+    console.log('Dismissing suggestion:', suggestion)
+    // TODO: Implement suggestion dismissal logic
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -184,9 +222,7 @@ export default function MatrixEditorPage() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() =>
-                  router.push(`/organizations/${orgId}/projects/${projectId}`)
-                }
+                onClick={() => router.push(`/organizations/${orgId}/projects/${projectId}`)}
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
@@ -201,10 +237,18 @@ export default function MatrixEditorPage() {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setShowHealthDashboard(!showHealthDashboard)}
+              >
+                <Activity className="mr-2 h-4 w-4" />
+                Health Dashboard
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowValidation(!showValidation)}
               >
                 <Eye className="mr-2 h-4 w-4" />
-                Validation
+                Quick Validation
               </Button>
               <Button variant="outline" size="sm">
                 <Users className="mr-2 h-4 w-4" />
@@ -251,10 +295,21 @@ export default function MatrixEditorPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
-            {showValidation && (
-              <ValidationSummary tasks={tasks} />
+            {/* Matrix Health Dashboard (Phase 1.2) */}
+            {showHealthDashboard && (
+              <MatrixHealthDashboard
+                data={healthData ?? null}
+                loading={healthLoading}
+                onRefresh={() => void refetchHealth()}
+                onApplySuggestion={handleApplySuggestion}
+                onDismissSuggestion={handleDismissSuggestion}
+              />
             )}
 
+            {/* Quick Validation Summary (Basic) */}
+            {showValidation && !showHealthDashboard && <ValidationSummary tasks={tasks} />}
+
+            {/* Quick Guide */}
             <div className="bg-white rounded-lg shadow-sm border p-4">
               <h3 className="font-semibold mb-3">Quick Guide</h3>
               <div className="space-y-2 text-sm text-muted-foreground">
@@ -263,12 +318,8 @@ export default function MatrixEditorPage() {
                     A
                   </div>
                   <div>
-                    <div className="font-medium text-foreground">
-                      Accountable
-                    </div>
-                    <div className="text-xs">
-                      Ultimately answerable (exactly 1)
-                    </div>
+                    <div className="font-medium text-foreground">Accountable</div>
+                    <div className="text-xs">Ultimately answerable (exactly 1)</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
@@ -276,12 +327,8 @@ export default function MatrixEditorPage() {
                     R
                   </div>
                   <div>
-                    <div className="font-medium text-foreground">
-                      Responsible
-                    </div>
-                    <div className="text-xs">
-                      Does the work (at least 1)
-                    </div>
+                    <div className="font-medium text-foreground">Responsible</div>
+                    <div className="text-xs">Does the work (at least 1)</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
@@ -308,5 +355,5 @@ export default function MatrixEditorPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

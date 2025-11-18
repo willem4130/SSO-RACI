@@ -1,14 +1,14 @@
 // RACI Matrix Router - Core matrix management
 
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { verifyOrganizationAccess, verifyResourceOwnership } from "@/lib/tenant";
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { verifyOrganizationAccess, verifyResourceOwnership } from '@/lib/tenant'
 import {
   validateRACIMatrix,
   getValidationSummary,
   validateMatrixEnhanced,
   detectConflicts,
-} from "@/server/services/matrix/validation";
+} from '@/server/services/matrix/validation'
 
 export const matrixRouter = createTRPCRouter({
   // List all matrices in a project
@@ -18,10 +18,10 @@ export const matrixRouter = createTRPCRouter({
         organizationId: z.string(),
         projectId: z.string(),
         includeArchived: z.boolean().default(false),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
 
       return ctx.db.rACIMatrix.findMany({
         where: {
@@ -45,17 +45,17 @@ export const matrixRouter = createTRPCRouter({
           },
         },
         orderBy: {
-          updatedAt: "desc",
+          updatedAt: 'desc',
         },
-      });
+      })
     }),
 
   // Get single matrix with full data
   getById: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
       const matrix = await ctx.db.rACIMatrix.findUnique({
         where: { id: input.id },
@@ -96,17 +96,17 @@ export const matrixRouter = createTRPCRouter({
               },
             },
             orderBy: {
-              orderIndex: "asc",
+              orderIndex: 'asc',
             },
           },
         },
-      });
+      })
 
       if (!matrix) {
-        throw new Error("Matrix not found");
+        throw new Error('Matrix not found')
       }
 
-      return matrix;
+      return matrix
     }),
 
   // Create new RACI matrix
@@ -118,14 +118,14 @@ export const matrixRouter = createTRPCRouter({
         name: z.string().min(1).max(200),
         description: z.string().optional(),
         templateId: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const member = await verifyOrganizationAccess(
         ctx.db,
         input.organizationId,
-        ctx.session.user.id,
-      );
+        ctx.session.user.id
+      )
 
       const matrix = await ctx.db.rACIMatrix.create({
         data: {
@@ -136,25 +136,25 @@ export const matrixRouter = createTRPCRouter({
           templateId: input.templateId,
           createdById: member.memberId,
         },
-      });
+      })
 
       // Create audit log
       await ctx.db.auditLog.create({
         data: {
           organizationId: input.organizationId,
           userId: ctx.session.user.id,
-          resourceType: "matrix",
+          resourceType: 'matrix',
           resourceId: matrix.id,
-          action: "CREATED",
+          action: 'CREATED',
         },
-      });
+      })
 
       // If template provided, apply it
       if (input.templateId) {
         // TODO: Apply template logic will be implemented
       }
 
-      return matrix;
+      return matrix
     }),
 
   // Update matrix
@@ -165,11 +165,11 @@ export const matrixRouter = createTRPCRouter({
         organizationId: z.string(),
         name: z.string().min(1).max(200).optional(),
         description: z.string().optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
       return ctx.db.rACIMatrix.update({
         where: { id: input.id },
@@ -177,65 +177,65 @@ export const matrixRouter = createTRPCRouter({
           name: input.name,
           description: input.description,
         },
-      });
+      })
     }),
 
   // Archive matrix
   archive: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
       return ctx.db.rACIMatrix.update({
         where: { id: input.id },
         data: { archivedAt: new Date() },
-      });
+      })
     }),
 
   // Delete matrix (soft delete)
   delete: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
       return ctx.db.rACIMatrix.update({
         where: { id: input.id },
         data: { deletedAt: new Date() },
-      });
+      })
     }),
 
   // Validate matrix
   validate: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
-      return validateRACIMatrix(ctx.db, input.id);
+      return validateRACIMatrix(ctx.db, input.id)
     }),
 
   // Get validation summary
   getValidationSummary: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
-      return getValidationSummary(ctx.db, input.id);
+      return getValidationSummary(ctx.db, input.id)
     }),
 
   // Get all members for matrix (for assignment dropdowns)
   getMembers: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
 
       return ctx.db.member.findMany({
         where: {
           organizationId: input.organizationId,
-          status: "ACTIVE",
+          status: 'ACTIVE',
         },
         select: {
           id: true,
@@ -251,9 +251,9 @@ export const matrixRouter = createTRPCRouter({
           },
         },
         orderBy: {
-          name: "asc",
+          name: 'asc',
         },
-      });
+      })
     }),
 
   // ============================================================================
@@ -266,10 +266,10 @@ export const matrixRouter = createTRPCRouter({
   validateEnhanced: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
-      return validateMatrixEnhanced(ctx.db, input.id);
+      return validateMatrixEnhanced(ctx.db, input.id)
     }),
 
   /**
@@ -278,10 +278,10 @@ export const matrixRouter = createTRPCRouter({
   detectConflicts: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
-      return detectConflicts(ctx.db, input.id);
+      return detectConflicts(ctx.db, input.id)
     }),
 
   /**
@@ -290,10 +290,10 @@ export const matrixRouter = createTRPCRouter({
   getHealthScore: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
-      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
+      await verifyResourceOwnership(ctx.db, 'matrix', input.id, input.organizationId)
 
-      const validation = await validateMatrixEnhanced(ctx.db, input.id);
+      const validation = await validateMatrixEnhanced(ctx.db, input.id)
 
       return {
         healthScore: validation.healthScore,
@@ -301,6 +301,6 @@ export const matrixRouter = createTRPCRouter({
         errorCount: validation.errors.length,
         warningCount: validation.warnings.length,
         suggestionCount: validation.suggestions.length,
-      };
+      }
     }),
-});
+})

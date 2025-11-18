@@ -1,7 +1,7 @@
-import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { TRPCError } from '@trpc/server';
-import { predefinedTemplates } from '@/lib/templates/predefined-templates';
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { TRPCError } from '@trpc/server'
+import { predefinedTemplates } from '@/lib/templates/predefined-templates'
 
 export const templateRouter = createTRPCRouter({
   // List all predefined templates
@@ -13,22 +13,20 @@ export const templateRouter = createTRPCRouter({
       category: template.category,
       taskCount: template.tasks.length,
       memberRoleCount: template.memberRoles.length,
-    }));
+    }))
   }),
 
   // Get template details by ID
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const template = predefinedTemplates.find((t) => t.id === input.id);
-      if (!template) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Template not found',
-        });
-      }
-      return template;
-    }),
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+    const template = predefinedTemplates.find((t) => t.id === input.id)
+    if (!template) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Template not found',
+      })
+    }
+    return template
+  }),
 
   // Create matrix from template
   createFromTemplate: protectedProcedure
@@ -41,14 +39,12 @@ export const templateRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const template = predefinedTemplates.find(
-        (t) => t.id === input.templateId
-      );
+      const template = predefinedTemplates.find((t) => t.id === input.templateId)
       if (!template) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Template not found',
-        });
+        })
       }
 
       // Verify project access
@@ -63,13 +59,13 @@ export const templateRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!project) {
         throw new TRPCError({
           code: 'FORBIDDEN',
           message: 'Project not found or access denied',
-        });
+        })
       }
 
       // Get member ID for createdBy
@@ -78,10 +74,10 @@ export const templateRouter = createTRPCRouter({
           organizationId: project.organizationId,
           userId: ctx.session.user.id,
         },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       // Create matrix with tasks and assignments
@@ -100,13 +96,13 @@ export const templateRouter = createTRPCRouter({
               assignments: {
                 create: task.roles
                   .map((role) => {
-                    const memberId = input.memberMapping[role.memberRole];
-                    if (!memberId) return null;
+                    const memberId = input.memberMapping[role.memberRole]
+                    if (!memberId) return null
                     return {
                       memberId,
                       raciRole: role.raciRole,
                       assignedBy: member.id,
-                    };
+                    }
                   })
                   .filter((a) => a !== null),
               },
@@ -124,9 +120,9 @@ export const templateRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
-      return matrix;
+      return matrix
     }),
 
   // Save current matrix as custom template
@@ -168,13 +164,13 @@ export const templateRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!matrix) {
         throw new TRPCError({
           code: 'NOT_FOUND',
           message: 'Matrix not found or access denied',
-        });
+        })
       }
 
       // Get member for createdById
@@ -183,10 +179,10 @@ export const templateRouter = createTRPCRouter({
           organizationId: matrix.organizationId,
           userId: ctx.session.user.id,
         },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       // Create custom template with structure as JSON string
@@ -203,7 +199,7 @@ export const templateRouter = createTRPCRouter({
         memberRoles: Array.from(
           new Set(matrix.tasks.flatMap((t: any) => t.assignments.map((a: any) => a.member.name)))
         ),
-      };
+      }
 
       const template = await ctx.db.template.create({
         data: {
@@ -217,8 +213,8 @@ export const templateRouter = createTRPCRouter({
           organizationId: matrix.organizationId,
           structure: JSON.stringify(templateStructure),
         },
-      });
+      })
 
-      return template;
+      return template
     }),
-});
+})

@@ -1,26 +1,22 @@
-'use client';
+'use client'
 
-import { useMemo } from 'react';
-import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
-import type { RaciTask, ValidationError } from '@/types/raci';
-import { cn } from '@/lib/utils';
+import { useMemo } from 'react'
+import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react'
+import type { RaciTask, ValidationError } from '@/types/raci'
+import { cn } from '@/lib/utils'
 
 interface ValidationSummaryProps {
-  tasks: RaciTask[];
-  className?: string;
+  tasks: RaciTask[]
+  className?: string
 }
 
 export function ValidationSummary({ tasks, className }: ValidationSummaryProps) {
   const validationErrors = useMemo<ValidationError[]>(() => {
-    const errors: ValidationError[] = [];
+    const errors: ValidationError[] = []
 
     tasks.forEach((task) => {
-      const accountableAssignments = task.assignments.filter(
-        (a) => a.raciRole === 'ACCOUNTABLE'
-      );
-      const responsibleAssignments = task.assignments.filter(
-        (a) => a.raciRole === 'RESPONSIBLE'
-      );
+      const accountableAssignments = task.assignments.filter((a) => a.raciRole === 'ACCOUNTABLE')
+      const responsibleAssignments = task.assignments.filter((a) => a.raciRole === 'RESPONSIBLE')
 
       // Check for no assignments
       if (task.assignments.length === 0) {
@@ -30,8 +26,8 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
           type: 'NO_ASSIGNMENTS',
           severity: 'error',
           message: 'Task has no role assignments',
-        });
-        return;
+        })
+        return
       }
 
       // Check for missing or multiple accountable
@@ -42,7 +38,7 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
           type: 'MISSING_ACCOUNTABLE',
           severity: 'error',
           message: 'Missing Accountable (A) assignment',
-        });
+        })
       } else if (accountableAssignments.length > 1) {
         errors.push({
           taskId: task.id,
@@ -50,7 +46,7 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
           type: 'MULTIPLE_ACCOUNTABLE',
           severity: 'error',
           message: `Has ${accountableAssignments.length} Accountable assignments (should be exactly 1)`,
-        });
+        })
       }
 
       // Check for missing responsible
@@ -61,16 +57,16 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
           type: 'MISSING_RESPONSIBLE',
           severity: 'error',
           message: 'Missing Responsible (R) assignment',
-        });
+        })
       }
-    });
+    })
 
-    return errors;
-  }, [tasks]);
+    return errors
+  }, [tasks])
 
-  const isValid = validationErrors.length === 0;
-  const totalTasks = tasks.length;
-  const validTasks = totalTasks - new Set(validationErrors.map(e => e.taskId)).size;
+  const isValid = validationErrors.length === 0
+  const totalTasks = tasks.length
+  const validTasks = totalTasks - new Set(validationErrors.map((e) => e.taskId)).size
 
   return (
     <div className={cn('border rounded-lg p-4', className)}>
@@ -85,7 +81,8 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
           <>
             <XCircle className="h-5 w-5 text-red-600" />
             <h3 className="font-semibold text-red-900">
-              Matrix Validation: {validationErrors.length} Issue{validationErrors.length !== 1 ? 's' : ''}
+              Matrix Validation: {validationErrors.length} Issue
+              {validationErrors.length !== 1 ? 's' : ''}
             </h3>
           </>
         )}
@@ -129,5 +126,5 @@ export function ValidationSummary({ tasks, className }: ValidationSummaryProps) 
         </ul>
       </div>
     </div>
-  );
+  )
 }

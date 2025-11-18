@@ -1,23 +1,23 @@
-'use client';
+'use client'
 
-import { useState, useMemo } from 'react';
-import { MatrixCategory } from '@prisma/client';
-import { TemplateCard } from './template-card';
-import { predefinedTemplates } from '@/lib/templates/predefined-templates';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useState, useMemo } from 'react'
+import { MatrixCategory } from '@prisma/client'
+import { TemplateCard } from './template-card'
+import { predefinedTemplates } from '@/lib/templates/predefined-templates'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Search, Filter } from 'lucide-react';
+} from '@/components/ui/select'
+import { Search, Filter } from 'lucide-react'
 
 interface TemplateLibraryProps {
-  onUseTemplate: (templateId: string) => void;
-  onPreviewTemplate?: (templateId: string) => void;
+  onUseTemplate: (templateId: string) => void
+  onPreviewTemplate?: (templateId: string) => void
 }
 
 const categoryOptions = [
@@ -32,14 +32,11 @@ const categoryOptions = [
   { value: 'OPERATIONS', label: 'Operations' },
   { value: 'SALES', label: 'Sales' },
   { value: 'CUSTOMER_SUCCESS', label: 'Customer Success' },
-];
+]
 
-export function TemplateLibrary({
-  onUseTemplate,
-  onPreviewTemplate,
-}: TemplateLibraryProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+export function TemplateLibrary({ onUseTemplate, onPreviewTemplate }: TemplateLibraryProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
 
   const filteredTemplates = useMemo(() => {
     return predefinedTemplates.filter((template) => {
@@ -47,15 +44,14 @@ export function TemplateLibrary({
       const matchesSearch =
         searchQuery === '' ||
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        template.description.toLowerCase().includes(searchQuery.toLowerCase());
+        template.description.toLowerCase().includes(searchQuery.toLowerCase())
 
       // Filter by category
-      const matchesCategory =
-        categoryFilter === 'all' || template.category === categoryFilter;
+      const matchesCategory = categoryFilter === 'all' || template.category === categoryFilter
 
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchQuery, categoryFilter]);
+      return matchesSearch && matchesCategory
+    })
+  }, [searchQuery, categoryFilter])
 
   return (
     <div className="space-y-6">
@@ -63,7 +59,8 @@ export function TemplateLibrary({
       <div>
         <h2 className="text-2xl font-bold mb-2">RACI Template Library</h2>
         <p className="text-gray-600">
-          Choose from {predefinedTemplates.length} pre-configured RACI templates to get started quickly
+          Choose from {predefinedTemplates.length} pre-configured RACI templates to get started
+          quickly
         </p>
       </div>
 
@@ -125,5 +122,5 @@ export function TemplateLibrary({
         </div>
       )}
     </div>
-  );
+  )
 }

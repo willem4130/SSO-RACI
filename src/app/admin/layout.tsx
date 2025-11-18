@@ -52,10 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               const Icon = item.icon
               return (
                 <Link key={item.href} href={item.href}>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start gap-3 hover:bg-accent"
-                  >
+                  <Button variant="ghost" className="w-full justify-start gap-3 hover:bg-accent">
                     <Icon className="h-4 w-4" />
                     {item.title}
                   </Button>

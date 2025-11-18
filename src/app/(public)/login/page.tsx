@@ -1,12 +1,12 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { api } from '@/trpc/react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { api } from '@/trpc/react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Card,
   CardContent,
@@ -14,36 +14,36 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
-} from '@/components/ui/card';
-import { toast } from 'sonner';
-import { LogIn } from 'lucide-react';
+} from '@/components/ui/card'
+import { toast } from 'sonner'
+import { LogIn } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
 
   const loginMutation = api.auth.login.useMutation({
     onSuccess: () => {
-      toast.success('Welcome back!');
-      router.push('/dashboard');
-      router.refresh();
+      toast.success('Welcome back!')
+      router.push('/dashboard')
+      router.refresh()
     },
     onError: (error: { message?: string }) => {
-      toast.error(error.message || 'Login failed');
+      toast.error(error.message || 'Login failed')
     },
-  });
+  })
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
+      toast.error('Please fill in all fields')
+      return
     }
 
-    loginMutation.mutate({ email, password });
-  };
+    loginMutation.mutate({ email, password })
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -87,19 +87,12 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loginMutation.isPending}
-            >
+            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
               {loginMutation.isPending ? 'Logging in...' : 'Log In'}
             </Button>
             <div className="text-sm text-center text-muted-foreground">
               Don't have an account?{' '}
-              <Link
-                href="/signup"
-                className="text-primary hover:underline font-medium"
-              >
+              <Link href="/signup" className="text-primary hover:underline font-medium">
                 Sign up
               </Link>
             </div>
@@ -107,5 +100,5 @@ export default function LoginPage() {
         </form>
       </Card>
     </div>
-  );
+  )
 }

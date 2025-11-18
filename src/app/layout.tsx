@@ -10,7 +10,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'RACI Matrix - Collaborative Role Management',
-  description: 'Professional RACI matrix application with real-time collaboration, validation, and analytics for managing project responsibilities',
+  description:
+    'Professional RACI matrix application with real-time collaboration, validation, and analytics for managing project responsibilities',
 }
 
 export default function RootLayout({

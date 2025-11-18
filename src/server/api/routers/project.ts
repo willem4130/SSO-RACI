@@ -1,6 +1,6 @@
-import { z } from 'zod';
-import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { TRPCError } from '@trpc/server';
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { TRPCError } from '@trpc/server'
 
 export const projectRouter = createTRPCRouter({
   // List projects by organization
@@ -21,40 +21,38 @@ export const projectRouter = createTRPCRouter({
           _count: { select: { matrices: true } },
         },
         orderBy: { createdAt: 'desc' },
-      });
-      return projects;
+      })
+      return projects
     }),
 
   // Get project by ID
-  getById: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const project = await ctx.db.project.findFirst({
-        where: {
-          id: input.id,
-          organization: {
-            members: {
-              some: { userId: ctx.session.user.id },
-            },
+  getById: protectedProcedure.input(z.object({ id: z.string() })).query(async ({ ctx, input }) => {
+    const project = await ctx.db.project.findFirst({
+      where: {
+        id: input.id,
+        organization: {
+          members: {
+            some: { userId: ctx.session.user.id },
           },
         },
-        include: {
-          department: true,
-          matrices: {
-            include: {
-              _count: { select: { tasks: true } },
-            },
-            orderBy: { updatedAt: 'desc' },
+      },
+      include: {
+        department: true,
+        matrices: {
+          include: {
+            _count: { select: { tasks: true } },
           },
+          orderBy: { updatedAt: 'desc' },
         },
-      });
+      },
+    })
 
-      if (!project) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
-      }
+    if (!project) {
+      throw new TRPCError({ code: 'NOT_FOUND' })
+    }
 
-      return project;
-    }),
+    return project
+  }),
 
   // Create project
   create: protectedProcedure
@@ -73,10 +71,10 @@ export const projectRouter = createTRPCRouter({
           organizationId: input.organizationId,
           userId: ctx.session.user.id,
         },
-      });
+      })
 
       if (!member) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       const project = await ctx.db.project.create({
@@ -90,9 +88,9 @@ export const projectRouter = createTRPCRouter({
         include: {
           department: true,
         },
-      });
+      })
 
-      return project;
+      return project
     }),
 
   // Update project
@@ -106,7 +104,7 @@ export const projectRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, ...data } = input;
+      const { id, ...data } = input
 
       // Verify access
       const project = await ctx.db.project.findFirst({
@@ -118,17 +116,17 @@ export const projectRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!project) {
-        throw new TRPCError({ code: 'NOT_FOUND' });
+        throw new TRPCError({ code: 'NOT_FOUND' })
       }
 
       return await ctx.db.project.update({
         where: { id },
         data,
         include: { department: true },
-      });
+      })
     }),
 
   // Delete project
@@ -148,16 +146,16 @@ export const projectRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       if (!project) {
-        throw new TRPCError({ code: 'FORBIDDEN' });
+        throw new TRPCError({ code: 'FORBIDDEN' })
       }
 
       await ctx.db.project.delete({
         where: { id: input.id },
-      });
+      })
 
-      return { success: true };
+      return { success: true }
     }),
-});
+})

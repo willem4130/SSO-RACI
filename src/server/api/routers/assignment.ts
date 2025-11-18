@@ -1,9 +1,9 @@
 // Assignment Router - RACI role assignments
 
-import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { verifyOrganizationAccess } from "@/lib/tenant";
-import { validateAssignment } from "@/server/services/matrix/validation";
+import { z } from 'zod'
+import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc'
+import { verifyOrganizationAccess } from '@/lib/tenant'
+import { validateAssignment } from '@/server/services/matrix/validation'
 
 export const assignmentRouter = createTRPCRouter({
   // Create new assignment
@@ -13,28 +13,28 @@ export const assignmentRouter = createTRPCRouter({
         organizationId: z.string(),
         taskId: z.string(),
         memberId: z.string(),
-        raciRole: z.enum(["RESPONSIBLE", "ACCOUNTABLE", "CONSULTED", "INFORMED"]),
+        raciRole: z.enum(['RESPONSIBLE', 'ACCOUNTABLE', 'CONSULTED', 'INFORMED']),
         notes: z.string().optional(),
         workload: z.number().min(0).max(100).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const member = await verifyOrganizationAccess(
         ctx.db,
         input.organizationId,
-        ctx.session.user.id,
-      );
+        ctx.session.user.id
+      )
 
       // Validate assignment before creating
       const validation = await validateAssignment(
         ctx.db,
         input.taskId,
         input.memberId,
-        input.raciRole,
-      );
+        input.raciRole
+      )
 
       if (!validation.valid) {
-        throw new Error(validation.error);
+        throw new Error(validation.error)
       }
 
       const assignment = await ctx.db.assignment.create({
@@ -67,7 +67,7 @@ export const assignmentRouter = createTRPCRouter({
             },
           },
         },
-      });
+      })
 
       // Create activity log
       await ctx.db.activityLog.create({
@@ -81,9 +81,9 @@ export const assignmentRouter = createTRPCRouter({
             taskName: assignment.task.name,
           }),
         },
-      });
+      })
 
-      return assignment;
+      return assignment
     }),
 
   // Update assignment
@@ -94,10 +94,10 @@ export const assignmentRouter = createTRPCRouter({
         organizationId: z.string(),
         notes: z.string().optional(),
         workload: z.number().min(0).max(100).optional(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
 
       return ctx.db.assignment.update({
         where: { id: input.id },
@@ -105,25 +105,25 @@ export const assignmentRouter = createTRPCRouter({
           notes: input.notes,
           workload: input.workload,
         },
-      });
+      })
     }),
 
   // Delete assignment
   delete: protectedProcedure
     .input(z.object({ id: z.string(), organizationId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
 
       return ctx.db.assignment.delete({
         where: { id: input.id },
-      });
+      })
     }),
 
   // Get assignments for a specific member
   getByMember: protectedProcedure
     .input(z.object({ memberId: z.string(), organizationId: z.string() }))
     .query(async ({ ctx, input }) => {
-      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id)
 
       return ctx.db.assignment.findMany({
         where: {
@@ -159,8 +159,8 @@ export const assignmentRouter = createTRPCRouter({
           },
         },
         orderBy: {
-          assignedAt: "desc",
+          assignedAt: 'desc',
         },
-      });
+      })
     }),
-});
+})

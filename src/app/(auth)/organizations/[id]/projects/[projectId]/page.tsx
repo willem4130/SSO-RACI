@@ -1,17 +1,11 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Plus, Grid3x3, ArrowLeft, Trash2, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Plus, Grid3x3, ArrowLeft, Trash2, Edit } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -19,20 +13,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function ProjectPage() {
-  const params = useParams();
-  const router = useRouter();
-  const orgId = params.id as string;
-  const projectId = params.projectId as string;
+  const params = useParams()
+  const router = useRouter()
+  const orgId = params.id as string
+  const projectId = params.projectId as string
 
-  const [showCreateMatrix, setShowCreateMatrix] = useState(false);
-  const [matrixName, setMatrixName] = useState('');
-  const [matrixDescription, setMatrixDescription] = useState('');
+  const [showCreateMatrix, setShowCreateMatrix] = useState(false)
+  const [matrixName, setMatrixName] = useState('')
+  const [matrixDescription, setMatrixDescription] = useState('')
 
   // Mock data
   const project = {
@@ -40,7 +34,7 @@ export default function ProjectPage() {
     name: 'Website Redesign',
     description: 'Q1 2025 website refresh project',
     status: 'ACTIVE',
-  };
+  }
 
   const matrices = [
     {
@@ -52,25 +46,21 @@ export default function ProjectPage() {
       createdAt: new Date(),
       updatedAt: new Date(),
     },
-  ];
+  ]
 
   const handleCreateMatrix = () => {
     // TODO: Call tRPC mutation
-    console.log('Creating matrix:', { matrixName, matrixDescription });
+    console.log('Creating matrix:', { matrixName, matrixDescription })
 
     // For now, navigate to a mock matrix
-    const newMatrixId = 'new-' + Date.now();
-    router.push(`/organizations/${orgId}/projects/${projectId}/matrices/${newMatrixId}`);
-  };
+    const newMatrixId = 'new-' + Date.now()
+    router.push(`/organizations/${orgId}/projects/${projectId}/matrices/${newMatrixId}`)
+  }
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center gap-4 mb-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push(`/organizations/${orgId}`)}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push(`/organizations/${orgId}`)}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
@@ -88,9 +78,7 @@ export default function ProjectPage() {
           <h2 className="text-2xl font-bold">RACI Matrices</h2>
           <div className="flex gap-2">
             <Link href="/templates">
-              <Button variant="outline">
-                Use Template
-              </Button>
+              <Button variant="outline">Use Template</Button>
             </Link>
             <Button onClick={() => setShowCreateMatrix(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -136,9 +124,7 @@ export default function ProjectPage() {
                         <span>{matrix.taskCount} tasks</span>
                         <span>{matrix.memberCount} members</span>
                       </div>
-                      <div>
-                        Updated {matrix.updatedAt.toLocaleDateString()}
-                      </div>
+                      <div>Updated {matrix.updatedAt.toLocaleDateString()}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -173,26 +159,22 @@ export default function ProjectPage() {
                 id="description"
                 placeholder="Brief description of this matrix..."
                 value={matrixDescription}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMatrixDescription(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setMatrixDescription(e.target.value)
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateMatrix(false)}
-            >
+            <Button variant="outline" onClick={() => setShowCreateMatrix(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleCreateMatrix}
-              disabled={!matrixName.trim()}
-            >
+            <Button onClick={handleCreateMatrix} disabled={!matrixName.trim()}>
               Create Matrix
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

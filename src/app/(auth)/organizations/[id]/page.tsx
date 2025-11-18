@@ -1,32 +1,26 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Plus, FolderOpen, Grid3x3, ArrowLeft, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MemberList } from '@/components/members/MemberList';
-import { OrganizationSettings } from '@/components/settings/OrganizationSettings';
+import { useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { Plus, FolderOpen, Grid3x3, ArrowLeft, Settings } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { MemberList } from '@/components/members/MemberList'
+import { OrganizationSettings } from '@/components/settings/OrganizationSettings'
 
 export default function OrganizationPage() {
-  const params = useParams();
-  const router = useRouter();
-  const orgId = params.id as string;
+  const params = useParams()
+  const router = useRouter()
+  const orgId = params.id as string
 
   // Mock data - replace with tRPC
   const organization = {
     id: orgId,
     name: 'Acme Corporation',
     memberCount: 25,
-  };
+  }
 
   const projects = [
     {
@@ -43,7 +37,7 @@ export default function OrganizationPage() {
       matrixCount: 5,
       status: 'ACTIVE',
     },
-  ];
+  ]
 
   const matrices = [
     {
@@ -64,23 +58,17 @@ export default function OrganizationPage() {
       memberCount: 6,
       updatedAt: new Date(),
     },
-  ];
+  ]
 
   return (
     <div className="container mx-auto py-8">
       <div className="flex items-center gap-4 mb-8">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push('/dashboard')}
-        >
+        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
           <h1 className="text-3xl font-bold">{organization.name}</h1>
-          <p className="text-muted-foreground mt-1">
-            {organization.memberCount} members
-          </p>
+          <p className="text-muted-foreground mt-1">{organization.memberCount} members</p>
         </div>
         <Button variant="outline">
           <Settings className="mr-2 h-4 w-4" />
@@ -126,10 +114,7 @@ export default function OrganizationPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {projects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/organizations/${orgId}/projects/${project.id}`}
-                >
+                <Link key={project.id} href={`/organizations/${orgId}/projects/${project.id}`}>
                   <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                     <CardHeader>
                       <CardTitle>{project.name}</CardTitle>
@@ -168,12 +153,8 @@ export default function OrganizationPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
-                        <CardTitle className="text-lg">
-                          {matrix.name}
-                        </CardTitle>
-                        <CardDescription className="text-sm">
-                          {matrix.projectName}
-                        </CardDescription>
+                        <CardTitle className="text-lg">{matrix.name}</CardTitle>
+                        <CardDescription className="text-sm">{matrix.projectName}</CardDescription>
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Updated {matrix.updatedAt.toLocaleDateString()}
@@ -201,5 +182,5 @@ export default function OrganizationPage() {
         </TabsContent>
       </Tabs>
     </div>
-  );
+  )
 }
