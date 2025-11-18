@@ -17,6 +17,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { api } from '@/trpc/react'
+import { toast } from 'sonner'
 
 export default function ProjectPage() {
   const params = useParams()
@@ -48,13 +50,31 @@ export default function ProjectPage() {
     },
   ]
 
-  const handleCreateMatrix = () => {
-    // TODO: Call tRPC mutation
-    console.log('Creating matrix:', { matrixName, matrixDescription })
+  const createMatrixMutation = api.matrix.create.useMutation({
+    onSuccess: (data) => {
+      toast.success('Matrix created successfully')
+      setShowCreateMatrix(false)
+      setMatrixName('')
+      setMatrixDescription('')
+      router.push(`/organizations/${orgId}/projects/${projectId}/matrices/${data.id}`)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create matrix')
+    },
+  })
 
-    // For now, navigate to a mock matrix
-    const newMatrixId = 'new-' + Date.now()
-    router.push(`/organizations/${orgId}/projects/${projectId}/matrices/${newMatrixId}`)
+  const handleCreateMatrix = () => {
+    if (!matrixName.trim()) {
+      toast.error('Matrix name is required')
+      return
+    }
+
+    createMatrixMutation.mutate({
+      organizationId: orgId,
+      projectId,
+      name: matrixName.trim(),
+      description: matrixDescription.trim() || undefined,
+    })
   }
 
   return (
@@ -166,11 +186,18 @@ export default function ProjectPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateMatrix(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateMatrix(false)}
+              disabled={createMatrixMutation.isPending}
+            >
               Cancel
             </Button>
-            <Button onClick={handleCreateMatrix} disabled={!matrixName.trim()}>
-              Create Matrix
+            <Button
+              onClick={handleCreateMatrix}
+              disabled={!matrixName.trim() || createMatrixMutation.isPending}
+            >
+              {createMatrixMutation.isPending ? 'Creating...' : 'Create Matrix'}
             </Button>
           </DialogFooter>
         </DialogContent>

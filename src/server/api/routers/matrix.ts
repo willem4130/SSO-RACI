@@ -151,7 +151,32 @@ export const matrixRouter = createTRPCRouter({
 
       // If template provided, apply it
       if (input.templateId) {
-        // TODO: Apply template logic will be implemented
+        const { predefinedTemplates } = await import('@/lib/templates/predefined-templates')
+        const template = predefinedTemplates.find((t) => t.id === input.templateId)
+
+        if (template) {
+          // Create tasks from template
+          await ctx.db.task.createMany({
+            data: template.tasks.map((task, index) => ({
+              matrixId: matrix.id,
+              name: task.name,
+              description: task.description,
+              orderIndex: index,
+            })),
+          })
+
+          // Log template application
+          await ctx.db.auditLog.create({
+            data: {
+              organizationId: input.organizationId,
+              userId: ctx.session.user.id,
+              resourceType: 'matrix',
+              resourceId: matrix.id,
+              action: 'UPDATED',
+              changes: JSON.stringify({ template: { id: template.id, name: template.name, tasksCreated: template.tasks.length } }),
+            },
+          })
+        }
       }
 
       return matrix

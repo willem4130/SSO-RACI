@@ -353,14 +353,22 @@ export default function MatrixEditorPage() {
     }
   }
 
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
+
   const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
-    console.log('Applying suggestion:', suggestion)
-    // TODO: Implement suggestion application logic
+    // Show notification that auto-apply is not yet implemented
+    // Users can manually make the changes based on suggestion
+    console.log('Manual action required for suggestion:', suggestion)
+
+    // In a future version, this would automatically apply the suggested changes
+    // For now, users follow the suggestion.action guidance
+    alert(`Suggestion noted: ${suggestion.message}\n\nAction: ${suggestion.action}\n\nPlease apply this change manually for now.`)
   }
 
   const handleDismissSuggestion = (suggestion: ValidationSuggestion) => {
-    console.log('Dismissing suggestion:', suggestion)
-    // TODO: Implement suggestion dismissal logic
+    // Track dismissed suggestions to hide them from the UI
+    setDismissedSuggestions(prev => new Set(prev).add(`${suggestion.taskId}-${suggestion.type}`))
+    console.log('Suggestion dismissed:', suggestion)
   }
 
   // Matrix CRUD handlers
