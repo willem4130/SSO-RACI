@@ -3,7 +3,12 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { verifyOrganizationAccess, verifyResourceOwnership } from "@/lib/tenant";
-import { validateRACIMatrix, getValidationSummary } from "@/server/services/matrix/validation";
+import {
+  validateRACIMatrix,
+  getValidationSummary,
+  validateMatrixEnhanced,
+  detectConflicts,
+} from "@/server/services/matrix/validation";
 
 export const matrixRouter = createTRPCRouter({
   // List all matrices in a project
@@ -249,5 +254,53 @@ export const matrixRouter = createTRPCRouter({
           name: "asc",
         },
       });
+    }),
+
+  // ============================================================================
+  // PHASE 1.2: ENHANCED VALIDATION ENDPOINTS
+  // ============================================================================
+
+  /**
+   * Get enhanced validation with smart suggestions and health score
+   */
+  validateEnhanced: protectedProcedure
+    .input(z.object({ id: z.string(), organizationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+
+      return validateMatrixEnhanced(ctx.db, input.id);
+    }),
+
+  /**
+   * Detect RACI conflicts in the matrix
+   */
+  detectConflicts: protectedProcedure
+    .input(z.object({ id: z.string(), organizationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+
+      return detectConflicts(ctx.db, input.id);
+    }),
+
+  /**
+   * Get matrix health score only (lightweight endpoint)
+   */
+  getHealthScore: protectedProcedure
+    .input(z.object({ id: z.string(), organizationId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      await verifyOrganizationAccess(ctx.db, input.organizationId, ctx.session.user.id);
+      await verifyResourceOwnership(ctx.db, "matrix", input.id, input.organizationId);
+
+      const validation = await validateMatrixEnhanced(ctx.db, input.id);
+
+      return {
+        healthScore: validation.healthScore,
+        isValid: validation.isValid,
+        errorCount: validation.errors.length,
+        warningCount: validation.warnings.length,
+        suggestionCount: validation.suggestions.length,
+      };
     }),
 });
