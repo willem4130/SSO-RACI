@@ -1,27 +1,56 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Users, Save, Eye, Settings, Activity } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RaciMatrixGrid } from '@/components/raci/raci-matrix-grid'
 import { ValidationSummary } from '@/components/raci/validation-summary'
 import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard'
-import type { RaciTask, RaciMember, ValidationSuggestion } from '@/types/raci'
+import type {
+  RaciTask,
+  RaciMember,
+  ValidationSuggestion,
+  TaskStatus,
+  TaskPriority,
+  RACIRole,
+  MemberRole,
+} from '@/types/raci'
 import type { RaciRole } from '@prisma/client'
 import { api } from '@/trpc/react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 
 export default function MatrixEditorPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const orgId = params.id as string
   const projectId = params.projectId as string
   const matrixId = params.matrixId as string
 
-  // Mock data - will be replaced with tRPC queries
-  const [matrixName] = useState('Sprint Planning Matrix')
   const [showValidation, setShowValidation] = useState(true)
   const [showHealthDashboard, setShowHealthDashboard] = useState(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Fetch matrix data
+  const {
+    data: matrix,
+    isLoading: matrixLoading,
+    error: matrixError,
+  } = api.matrix.getById.useQuery({
+    id: matrixId,
+    organizationId: orgId,
+  })
+
+  // Fetch available members for assignments
+  const {
+    data: availableMembers,
+    isLoading: membersLoading,
+  } = api.matrix.getMembers.useQuery({
+    id: matrixId,
+    organizationId: orgId,
+  })
 
   // Enhanced validation hook
   const {
@@ -34,97 +63,147 @@ export default function MatrixEditorPage() {
       organizationId: orgId,
     },
     {
-      enabled: showHealthDashboard,
+      enabled: showHealthDashboard && !!matrix,
       refetchOnWindowFocus: false,
     }
   )
 
-  // Sample tasks and members
-  const [tasks, setTasks] = useState<RaciTask[]>([
-    {
-      id: '1',
-      name: 'Define Requirements',
-      description: 'Gather and document project requirements',
-      orderIndex: 0,
-      status: 'NOT_STARTED',
-      priority: 'HIGH',
-      assignments: [
-        {
-          id: 'a1',
-          taskId: '1',
-          memberId: 'm1',
-          raciRole: 'ACCOUNTABLE' as RaciRole,
-        },
-        {
-          id: 'a2',
-          taskId: '1',
-          memberId: 'm2',
-          raciRole: 'RESPONSIBLE' as RaciRole,
-        },
-        {
-          id: 'a3',
-          taskId: '1',
-          memberId: 'm3',
-          raciRole: 'CONSULTED' as RaciRole,
-        },
-      ],
+  // Mutation: Create task
+  const createTaskMutation = api.task.create.useMutation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
     },
-    {
-      id: '2',
-      name: 'Create Design Mockups',
-      description: 'Design UI/UX mockups',
-      orderIndex: 1,
-      status: 'NOT_STARTED',
-      priority: 'HIGH',
-      assignments: [
-        {
-          id: 'a4',
-          taskId: '2',
-          memberId: 'm3',
-          raciRole: 'ACCOUNTABLE' as RaciRole,
-        },
-        {
-          id: 'a5',
-          taskId: '2',
-          memberId: 'm2',
-          raciRole: 'CONSULTED' as RaciRole,
-        },
-      ],
-    },
-    {
-      id: '3',
-      name: 'Implement Frontend',
-      description: 'Build React components',
-      orderIndex: 2,
-      status: 'NOT_STARTED',
-      priority: 'MEDIUM',
-      assignments: [],
-    },
-  ])
+  })
 
-  const members: RaciMember[] = [
-    {
-      id: 'm1',
-      name: 'Alice Johnson',
-      email: 'alice@example.com',
-      role: 'ADMIN',
-      department: { id: 'd1', name: 'Engineering', code: 'eng' },
+  // Mutation: Update task
+  const updateTaskMutation = api.task.update.useMutation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
     },
-    {
-      id: 'm2',
-      name: 'Bob Smith',
-      email: 'bob@example.com',
-      role: 'MEMBER',
-      department: { id: 'd1', name: 'Engineering', code: 'eng' },
+  })
+
+  // Mutation: Delete task
+  const deleteTaskMutation = api.task.delete.useMutation({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
     },
-    {
-      id: 'm3',
-      name: 'Carol Davis',
-      email: 'carol@example.com',
-      role: 'MEMBER',
-      department: { id: 'd2', name: 'Design', code: 'design' },
+  })
+
+  // Mutation: Create assignment with optimistic update
+  const createAssignmentMutation = api.assignment.create.useMutation({
+    onMutate: async (newAssignment) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: [['matrix', 'getById']] })
+
+      // Snapshot previous value
+      const previousMatrix = queryClient.getQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }])
+
+      // Optimistically update
+      if (previousMatrix && typeof previousMatrix === 'object' && 'tasks' in previousMatrix) {
+        queryClient.setQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }], {
+          ...previousMatrix,
+          tasks: (previousMatrix as any).tasks.map((task: any) =>
+            task.id === newAssignment.taskId
+              ? {
+                  ...task,
+                  assignments: [
+                    ...task.assignments,
+                    {
+                      id: 'temp-' + Date.now(),
+                      taskId: newAssignment.taskId,
+                      memberId: newAssignment.memberId,
+                      raciRole: newAssignment.raciRole,
+                    },
+                  ],
+                }
+              : task
+          ),
+        })
+      }
+
+      return { previousMatrix }
     },
-  ]
+    onError: (_err, _newAssignment, context) => {
+      // Rollback on error
+      if (context?.previousMatrix) {
+        queryClient.setQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }], context.previousMatrix)
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
+    },
+  })
+
+  // Mutation: Delete assignment with optimistic update
+  const deleteAssignmentMutation = api.assignment.delete.useMutation({
+    onMutate: async (variables) => {
+      await queryClient.cancelQueries({ queryKey: [['matrix', 'getById']] })
+
+      const previousMatrix = queryClient.getQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }])
+
+      if (previousMatrix && typeof previousMatrix === 'object' && 'tasks' in previousMatrix) {
+        queryClient.setQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }], {
+          ...previousMatrix,
+          tasks: (previousMatrix as any).tasks.map((task: any) => ({
+            ...task,
+            assignments: task.assignments.filter((a: any) => a.id !== variables.id),
+          })),
+        })
+      }
+
+      return { previousMatrix }
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousMatrix) {
+        queryClient.setQueryData([['matrix', 'getById'], { input: { id: matrixId, organizationId: orgId }, type: 'query' }], context.previousMatrix)
+      }
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
+    },
+  })
+
+  // Transform tasks to RaciTask format
+  const tasks = useMemo<RaciTask[]>(() => {
+    if (!matrix?.tasks) return []
+    return matrix.tasks.map((task) => ({
+      id: task.id,
+      name: task.name,
+      description: task.description ?? undefined,
+      orderIndex: task.orderIndex,
+      status: task.status as TaskStatus,
+      priority: task.priority as TaskPriority,
+      assignments: task.assignments.map((a) => ({
+        id: a.id,
+        taskId: a.taskId,
+        memberId: a.memberId,
+        raciRole: a.raciRole as RACIRole,
+      })),
+    }))
+  }, [matrix?.tasks])
+
+  // Transform members to RaciMember format
+  const members = useMemo<RaciMember[]>(() => {
+    if (!availableMembers) return []
+    return availableMembers.map((m) => ({
+      id: m.id,
+      name: m.name ?? 'Unknown',
+      email: m.email,
+      role: m.role as MemberRole,
+      department: m.department
+        ? {
+            id: m.department.id,
+            name: m.department.name,
+            code: m.department.code ?? '',
+          }
+        : undefined,
+    }))
+  }, [availableMembers])
 
   const handleAssignmentChange = async (
     taskId: string,
@@ -132,75 +211,52 @@ export default function MatrixEditorPage() {
     role: RaciRole | null,
     assignmentId?: string
   ) => {
-    // Update local state
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => {
-        if (task.id !== taskId) return task
-
-        let newAssignments = [...task.assignments]
-
-        if (role === null) {
-          // Remove assignment
-          newAssignments = newAssignments.filter((a) => a.id !== assignmentId)
-        } else if (assignmentId) {
-          // Update existing assignment
-          newAssignments = newAssignments.map((a) =>
-            a.id === assignmentId ? { ...a, raciRole: role } : a
-          )
-        } else {
-          // Add new assignment
-          newAssignments.push({
-            id: `a-${Date.now()}`,
-            taskId,
-            memberId,
-            raciRole: role,
-          })
-        }
-
-        return { ...task, assignments: newAssignments }
-      })
-    )
-
-    // TODO: Call tRPC mutation to persist change
-    console.log('Assignment changed:', { taskId, memberId, role, assignmentId })
+    try {
+      setErrorMessage(null)
+      if (role === null && assignmentId) {
+        // Delete assignment
+        await deleteAssignmentMutation.mutateAsync({
+          id: assignmentId,
+          organizationId: orgId,
+        })
+      } else if (role !== null && !assignmentId) {
+        // Create new assignment
+        await createAssignmentMutation.mutateAsync({
+          organizationId: orgId,
+          taskId,
+          memberId,
+          raciRole: role,
+        })
+      }
+      // Note: We don't support updating roles directly - user must delete and recreate
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to update assignment')
+      setTimeout(() => setErrorMessage(null), 5000)
+    }
   }
 
-  const handleTaskUpdate = (taskId: string, updates: Partial<RaciTask>) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) => (task.id === taskId ? { ...task, ...updates } : task))
-    )
-    // TODO: Call tRPC mutation to persist task updates
-    console.log('Task updated:', { taskId, updates })
+  const handleTaskUpdate = async (taskId: string, updates: Partial<RaciTask>) => {
+    await updateTaskMutation.mutateAsync({
+      id: taskId,
+      organizationId: orgId,
+      name: updates.name,
+      description: updates.description,
+      status: updates.status,
+      priority: updates.priority,
+    })
   }
 
-  const handleAddTask = () => {
-    const newTask: RaciTask = {
-      id: `task-${Date.now()}`,
+  const handleAddTask = async () => {
+    const orderIndex = tasks.length
+    await createTaskMutation.mutateAsync({
+      matrixId,
+      organizationId: orgId,
       name: 'New Task',
-      orderIndex: tasks.length,
+      orderIndex,
       status: 'NOT_STARTED',
       priority: 'MEDIUM',
-      assignments: [],
-    }
-    setTasks([...tasks, newTask])
+    })
   }
-
-  const handleSave = () => {
-    // TODO: Call tRPC mutation to save matrix
-    console.log('Saving matrix...', { tasks })
-    alert('Matrix saved! (This is a mock - will be connected to tRPC)')
-  }
-
-  // Refresh health data when tasks change
-  useEffect(() => {
-    if (showHealthDashboard) {
-      // Debounce the refetch to avoid too many API calls
-      const timer = setTimeout(() => {
-        void refetchHealth()
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [tasks, showHealthDashboard, refetchHealth])
 
   const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
     console.log('Applying suggestion:', suggestion)
@@ -212,8 +268,58 @@ export default function MatrixEditorPage() {
     // TODO: Implement suggestion dismissal logic
   }
 
+  // Loading state
+  if (matrixLoading || membersLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-muted-foreground">Loading matrix...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (matrixError || !matrix) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Matrix Not Found</h2>
+          <p className="text-muted-foreground mb-4">
+            {matrixError?.message ?? 'Could not load the matrix'}
+          </p>
+          <Button onClick={() => router.push(`/organizations/${orgId}/projects/${projectId}`)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Project
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const isLoading =
+    createTaskMutation.isPending ||
+    updateTaskMutation.isPending ||
+    deleteTaskMutation.isPending ||
+    createAssignmentMutation.isPending ||
+    deleteAssignmentMutation.isPending
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="fixed top-4 right-4 z-50 bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 max-w-md">
+          <span className="flex-1">{errorMessage}</span>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-white hover:text-gray-200"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -227,9 +333,10 @@ export default function MatrixEditorPage() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">{matrixName}</h1>
+                <h1 className="text-2xl font-bold">{matrix.name}</h1>
                 <p className="text-sm text-muted-foreground">
                   {tasks.length} tasks • {members.length} members
+                  {isLoading && ' • Saving...'}
                 </p>
               </div>
             </div>
@@ -257,10 +364,6 @@ export default function MatrixEditorPage() {
               <Button variant="outline" size="sm">
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
-              </Button>
-              <Button onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                Save
               </Button>
             </div>
           </div>
