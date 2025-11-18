@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2, Radio } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -24,6 +24,10 @@ import { Label } from '@/components/ui/label'
 import { RaciMatrixGrid } from '@/components/raci/raci-matrix-grid'
 import { ValidationSummary } from '@/components/raci/validation-summary'
 import { MatrixHealthDashboard } from '@/components/raci/matrix-health-dashboard'
+import { PresenceIndicator } from '@/components/realtime/presence-indicator'
+import { ActivityFeed } from '@/components/realtime/activity-feed'
+import { useRealtime } from '@/hooks/use-realtime'
+import { Badge } from '@/components/ui/badge'
 import type {
   RaciTask,
   RaciMember,
@@ -48,7 +52,18 @@ export default function MatrixEditorPage() {
 
   const [showValidation, setShowValidation] = useState(true)
   const [showHealthDashboard, setShowHealthDashboard] = useState(true)
+  const [showActivityFeed, setShowActivityFeed] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  // Real-time collaboration
+  const { isConnected, presence, presenceCount } = useRealtime({
+    matrixId,
+    onMatrixUpdate: () => {
+      // Invalidate queries when other users make changes
+      void queryClient.invalidateQueries({ queryKey: [['matrix', 'getById']] })
+      void refetchHealth()
+    },
+  })
 
   // Matrix CRUD dialog states
   const [showRenameDialog, setShowRenameDialog] = useState(false)
@@ -461,22 +476,43 @@ export default function MatrixEditorPage() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <div>
-                <h1 className="text-2xl font-bold">{matrix.name}</h1>
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold">{matrix.name}</h1>
+                  {isConnected && (
+                    <Badge variant="outline" className="gap-1.5">
+                      <Radio className="h-3 w-3 text-green-500 animate-pulse" />
+                      <span className="text-xs">Live</span>
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {tasks.length} tasks • {members.length} members
                   {isLoading && ' • Saving...'}
                 </p>
+                {presenceCount > 0 && (
+                  <div className="mt-2">
+                    <PresenceIndicator users={presence} maxDisplay={5} size="sm" />
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowHealthDashboard(!showHealthDashboard)}
+                onClick={() => setShowActivityFeed(!showActivityFeed)}
               >
                 <Activity className="mr-2 h-4 w-4" />
-                Health Dashboard
+                Activity
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHealthDashboard(!showHealthDashboard)}
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Health
               </Button>
               <Button
                 variant="outline"
@@ -567,6 +603,9 @@ export default function MatrixEditorPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Activity Feed (Phase 3 - Real-time Collaboration) */}
+            {showActivityFeed && <ActivityFeed matrixId={matrixId} limit={50} />}
+
             {/* Matrix Health Dashboard (Phase 1.2) */}
             {showHealthDashboard && (
               <MatrixHealthDashboard
@@ -579,7 +618,7 @@ export default function MatrixEditorPage() {
             )}
 
             {/* Quick Validation Summary (Basic) */}
-            {showValidation && !showHealthDashboard && <ValidationSummary tasks={tasks} />}
+            {showValidation && !showHealthDashboard && !showActivityFeed && <ValidationSummary tasks={tasks} />}
 
             {/* Quick Guide */}
             <div className="bg-white rounded-lg shadow-sm border p-4">
