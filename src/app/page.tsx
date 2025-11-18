@@ -39,14 +39,20 @@ export default function Home() {
         </div>
         <div className="flex gap-4 mt-8">
           <a
-            href="/dashboard"
+            href="/signup"
             className="rounded-lg bg-white px-6 py-3 text-lg font-semibold text-indigo-900 hover:bg-gray-100 transition"
           >
-            Get Started
+            Sign Up Free
           </a>
           <a
-            href="/templates"
+            href="/login"
             className="rounded-lg bg-indigo-700 px-6 py-3 text-lg font-semibold text-white hover:bg-indigo-600 transition"
+          >
+            Log In
+          </a>
+          <a
+            href="/dashboard"
+            className="rounded-lg border-2 border-white px-6 py-3 text-lg font-semibold text-white hover:bg-white/10 transition"
           >
             Browse Templates
           </a>
