@@ -9,6 +9,8 @@ export const env = createEnv({
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     DATABASE_URL: z.string().url(),
     DIRECT_URL: z.string().url().optional(),
+    // Auth bypass for demos (set to 'true' to skip login)
+    BYPASS_AUTH: z.string().optional(),
     // Upstash Redis for rate limiting
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
@@ -39,6 +41,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     DIRECT_URL: process.env.DIRECT_URL,
+    BYPASS_AUTH: process.env.BYPASS_AUTH,
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     API_SECRET_KEY: process.env.API_SECRET_KEY,

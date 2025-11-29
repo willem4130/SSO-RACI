@@ -6,6 +6,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
 const SESSION_COOKIE_NAME = 'raci-session'
 const SESSION_EXPIRY = '7d' // 7 days
 
+// Auth bypass - provides a mock user for testing without auth
+// Set BYPASS_AUTH=true to skip authentication (useful for demos)
+const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development'
+const MOCK_USER: SessionUser = {
+  id: 'demo-user-001',
+  email: 'demo@raci.app',
+  name: 'Demo User',
+}
+
 export interface SessionUser {
   id: string
   email: string
@@ -37,7 +46,7 @@ export function verifySession(token: string): SessionUser | null {
       email: payload.email,
       name: payload.name,
     }
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -58,12 +67,17 @@ export async function setSessionCookie(token: string) {
 
 /**
  * Get session from cookie
+ * If BYPASS_AUTH is enabled, returns mock user if no session exists (auth bypass)
  */
 export async function getSessionFromCookie(): Promise<SessionUser | null> {
   const cookieStore = await cookies()
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (!token) {
+    // Auth bypass: return mock user for testing without login
+    if (BYPASS_AUTH) {
+      return MOCK_USER
+    }
     return null
   }
 
