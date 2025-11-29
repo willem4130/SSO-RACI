@@ -54,13 +54,102 @@ type TaskRow = {
   [key: string]: RaciCellData | RaciTask
 }
 
+// Task cell component with editable name/description
+function TaskCellContent({
+  task,
+  hasError,
+  isReadOnly,
+  onTaskUpdate,
+}: {
+  task: RaciTask
+  hasError: boolean
+  isReadOnly: boolean
+  onTaskUpdate?: (taskId: string, updates: Partial<RaciTask>) => void
+}) {
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [isEditingDesc, setIsEditingDesc] = useState(false)
+  const [editName, setEditName] = useState(task.name)
+  const [editDesc, setEditDesc] = useState(task.description || '')
+
+  const handleNameSave = () => {
+    if (editName.trim() && editName !== task.name && onTaskUpdate) {
+      onTaskUpdate(task.id, { name: editName.trim() })
+    }
+    setIsEditingName(false)
+  }
+
+  const handleDescSave = () => {
+    if (editDesc !== task.description && onTaskUpdate) {
+      onTaskUpdate(task.id, { description: editDesc.trim() || undefined })
+    }
+    setIsEditingDesc(false)
+  }
+
+  return (
+    <div className={cn('px-4 py-3 flex items-center gap-2', hasError && 'bg-red-50')}>
+      {hasError && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
+      <div className="flex-1 min-w-0">
+        {isEditingName ? (
+          <input
+            type="text"
+            className="font-medium text-sm w-full border rounded px-2 py-1"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            onBlur={handleNameSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleNameSave()
+              if (e.key === 'Escape') {
+                setEditName(task.name)
+                setIsEditingName(false)
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <div
+            className="font-medium text-sm truncate cursor-text hover:bg-gray-100 px-2 py-1 rounded"
+            onClick={() => !isReadOnly && setIsEditingName(true)}
+          >
+            {task.name}
+          </div>
+        )}
+        {isEditingDesc ? (
+          <input
+            type="text"
+            className="text-xs text-gray-500 w-full border rounded px-2 py-1 mt-0.5"
+            value={editDesc}
+            placeholder="Add description..."
+            onChange={(e) => setEditDesc(e.target.value)}
+            onBlur={handleDescSave}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleDescSave()
+              if (e.key === 'Escape') {
+                setEditDesc(task.description || '')
+                setIsEditingDesc(false)
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <div
+            className="text-xs text-gray-500 truncate mt-0.5 cursor-text hover:bg-gray-100 px-2 py-1 rounded"
+            onClick={() => !isReadOnly && setIsEditingDesc(true)}
+          >
+            {task.description || 'Add description...'}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Sortable row component for drag-and-drop
 function SortableRow({
   row,
   children,
   isReadOnly,
 }: {
-  row: any
+  row: { original: TaskRow }
   children: React.ReactNode
   isReadOnly: boolean
 }) {
@@ -141,7 +230,7 @@ export function RaciMatrixGrid({
     try {
       // Call parent handler to persist to database
       await onTaskReorder(reordered)
-    } catch (error) {
+    } catch {
       // Rollback on error
       setLocalTasks(tasks)
     }
@@ -224,81 +313,15 @@ export function RaciMatrixGrid({
         cell: (info) => {
           const task = info.getValue() as RaciTask
           const validation = taskValidation[task.id]
-          const hasError = validation && (!validation.hasAccountable || !validation.hasResponsible)
-          const [isEditingName, setIsEditingName] = useState(false)
-          const [isEditingDesc, setIsEditingDesc] = useState(false)
-          const [editName, setEditName] = useState(task.name)
-          const [editDesc, setEditDesc] = useState(task.description || '')
-
-          const handleNameSave = () => {
-            if (editName.trim() && editName !== task.name && onTaskUpdate) {
-              onTaskUpdate(task.id, { name: editName.trim() })
-            }
-            setIsEditingName(false)
-          }
-
-          const handleDescSave = () => {
-            if (editDesc !== task.description && onTaskUpdate) {
-              onTaskUpdate(task.id, { description: editDesc.trim() || undefined })
-            }
-            setIsEditingDesc(false)
-          }
+          const hasError = validation ? (!validation.hasAccountable || !validation.hasResponsible) : false
 
           return (
-            <div className={cn('px-4 py-3 flex items-center gap-2', hasError && 'bg-red-50')}>
-              {hasError && <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />}
-              <div className="flex-1 min-w-0">
-                {isEditingName ? (
-                  <input
-                    type="text"
-                    className="font-medium text-sm w-full border rounded px-2 py-1"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    onBlur={handleNameSave}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleNameSave()
-                      if (e.key === 'Escape') {
-                        setEditName(task.name)
-                        setIsEditingName(false)
-                      }
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    className="font-medium text-sm truncate cursor-text hover:bg-gray-100 px-2 py-1 rounded"
-                    onClick={() => !isReadOnly && setIsEditingName(true)}
-                  >
-                    {task.name}
-                  </div>
-                )}
-                {isEditingDesc ? (
-                  <input
-                    type="text"
-                    className="text-xs text-gray-500 w-full border rounded px-2 py-1 mt-0.5"
-                    value={editDesc}
-                    placeholder="Add description..."
-                    onChange={(e) => setEditDesc(e.target.value)}
-                    onBlur={handleDescSave}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleDescSave()
-                      if (e.key === 'Escape') {
-                        setEditDesc(task.description || '')
-                        setIsEditingDesc(false)
-                      }
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    className="text-xs text-gray-500 truncate mt-0.5 cursor-text hover:bg-gray-100 px-2 py-1 rounded"
-                    onClick={() => !isReadOnly && setIsEditingDesc(true)}
-                  >
-                    {task.description || 'Add description...'}
-                  </div>
-                )}
-              </div>
-            </div>
+            <TaskCellContent
+              task={task}
+              hasError={hasError}
+              isReadOnly={isReadOnly}
+              onTaskUpdate={onTaskUpdate}
+            />
           )
         },
         size: 250,
@@ -373,7 +396,7 @@ export function RaciMatrixGrid({
     }
 
     return cols
-  }, [members, columnHelper, onAddTask, onAddMember, isReadOnly, taskValidation, loadingCell])
+  }, [members, columnHelper, onAddTask, onAddMember, isReadOnly, taskValidation, loadingCell, handleRoleChange, onTaskUpdate])
 
   const table = useReactTable({
     data,

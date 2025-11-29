@@ -7,7 +7,7 @@ import { db } from '@/server/db'
  * Public: No authentication required
  * Tests database connection and returns system status
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Test database connection
     await db.$queryRaw`SELECT 1`

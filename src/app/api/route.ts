@@ -6,7 +6,7 @@ import { apiResponse } from '@/lib/api-middleware'
  * Public: No authentication required
  * Returns available API endpoints and usage information
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return apiResponse({
     name: 'RACI Matrix API',
     version: '1.0.0',

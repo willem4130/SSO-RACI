@@ -211,7 +211,7 @@ export class PdfExporter {
     doc.fontSize(12).font('Helvetica-Bold').text('Workload Distribution').moveDown(0.5);
     doc.fontSize(9).font('Helvetica');
 
-    Object.entries(data.analytics.workloadDistribution).forEach(([email, workload]) => {
+    Object.entries(data.analytics.workloadDistribution).forEach(([_email, workload]) => {
       doc.font('Helvetica-Bold').text(workload.name, { continued: true });
       doc
         .font('Helvetica')

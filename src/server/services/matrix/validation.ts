@@ -202,7 +202,7 @@ async function validateWorkloadDistribution(
   const OVERLOAD_THRESHOLD = 10
   const ACCOUNTABLE_THRESHOLD = 5
 
-  for (const [memberId, stats] of memberAssignments) {
+  for (const [_memberId, stats] of memberAssignments) {
     if (stats.total > OVERLOAD_THRESHOLD) {
       warnings.push({
         taskId: '',
@@ -492,7 +492,7 @@ async function generateSmartSuggestions(
   }
 
   // Suggest redistribution if someone is overloaded
-  for (const [memberId, stats] of memberWorkload) {
+  for (const [_memberId, stats] of memberWorkload) {
     if (stats.total > 12) {
       suggestions.push({
         taskId: '',

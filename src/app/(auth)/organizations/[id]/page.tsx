@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, FolderOpen, Grid3x3, ArrowLeft, Settings } from 'lucide-react'
+import { Plus, FolderOpen, Grid3X3, Settings, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -12,7 +11,6 @@ import { OrganizationSettings } from '@/components/settings/OrganizationSettings
 
 export default function OrganizationPage() {
   const params = useParams()
-  const router = useRouter()
   const orgId = params.id as string
 
   // Mock data - replace with tRPC
@@ -61,16 +59,19 @@ export default function OrganizationPage() {
   ]
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">{organization.name}</h1>
-          <p className="text-muted-foreground mt-1">{organization.memberCount} members</p>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{organization.name}</h1>
+          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              {organization.memberCount} members
+            </span>
+          </div>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" size="sm">
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </Button>
@@ -122,7 +123,7 @@ export default function OrganizationPage() {
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center text-sm text-muted-foreground">
-                        <Grid3x3 className="mr-2 h-4 w-4" />
+                        <Grid3X3 className="mr-2 h-4 w-4" />
                         <span>{project.matrixCount} matrices</span>
                       </div>
                       <div className="mt-2">

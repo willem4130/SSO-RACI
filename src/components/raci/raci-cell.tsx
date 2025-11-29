@@ -41,10 +41,10 @@ const roleNames: Record<RaciRole, string> = {
 }
 
 export function RaciCell({
-  taskId,
-  memberId,
+  taskId: _taskId,
+  memberId: _memberId,
   currentRole,
-  assignmentId,
+  assignmentId: _assignmentId,
   onRoleChange,
   disabled = false,
 }: RaciCellProps) {

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Bell, Lock, Palette, Globe, Database, Shield } from 'lucide-react'
+import { Bell, Palette, Globe, Database, Shield } from 'lucide-react'
 
 export default function SettingsPage() {
   return (

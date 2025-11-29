@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Grid3x3, ArrowLeft, Trash2, Edit } from 'lucide-react'
+import { Plus, Grid3X3, Edit } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -78,16 +79,19 @@ export default function ProjectPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" onClick={() => router.push(`/organizations/${orgId}`)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold">{project.name}</h1>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+            <Badge variant="secondary" className="text-xs">
+              {project.status}
+            </Badge>
+          </div>
           <p className="text-muted-foreground mt-1">{project.description}</p>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" size="sm">
           <Edit className="mr-2 h-4 w-4" />
           Edit Project
         </Button>
@@ -110,7 +114,7 @@ export default function ProjectPage() {
         {matrices.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <Grid3x3 className="h-16 w-16 text-muted-foreground mb-4" />
+              <Grid3X3 className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold mb-2">No matrices yet</h3>
               <p className="text-muted-foreground mb-6 text-center max-w-md">
                 Create your first RACI matrix or start from a template

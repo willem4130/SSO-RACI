@@ -49,7 +49,7 @@ export function SortableMatrixGrid({
   enableDragDrop = true,
 }: SortableMatrixGridProps) {
   const [sortedTasks, setSortedTasks] = useState(tasks)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [_activeId, setActiveId] = useState<string | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor),

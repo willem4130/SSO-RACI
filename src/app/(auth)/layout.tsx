@@ -1,12 +1,19 @@
+import { AppSidebar, AppHeader } from '@/components/navigation'
+
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen">
-      <nav className="border-b bg-background">
-        <div className="container mx-auto flex h-16 items-center px-4">
-          <h1 className="text-xl font-bold">RACI Matrix</h1>
-        </div>
-      </nav>
-      <main className="container mx-auto p-4">{children}</main>
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <AppSidebar />
+
+      {/* Main Content Area */}
+      <div className="flex-1 pl-64">
+        {/* Header with breadcrumbs and user menu */}
+        <AppHeader />
+
+        {/* Page Content */}
+        <main className="p-6">{children}</main>
+      </div>
     </div>
   )
 }

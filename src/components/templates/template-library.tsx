@@ -1,10 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { MatrixCategory } from '@prisma/client'
 import { TemplateCard } from './template-card'
 import { predefinedTemplates } from '@/lib/templates/predefined-templates'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
   Select,

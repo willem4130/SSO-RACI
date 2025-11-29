@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Users, Eye, Settings, Activity, Loader2, MoreVertical, Pencil, Copy, Archive, Trash2, Radio, MessageSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -353,7 +353,7 @@ export default function MatrixEditorPage() {
     }
   }
 
-  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
+  const [_dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
 
   const handleApplySuggestion = (suggestion: ValidationSuggestion) => {
     // Show notification that auto-apply is not yet implemented

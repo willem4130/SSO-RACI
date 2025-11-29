@@ -148,7 +148,7 @@ export function ActivityFeed({ matrixId, limit = 50, className = '' }: ActivityF
             </div>
           ) : (
             <div className="space-y-4">
-              {activities.map((activity, index) => (
+              {activities.map((activity) => (
                 <div
                   key={activity.id}
                   className="flex items-start gap-3 pb-4 border-b last:border-0 last:pb-0"
