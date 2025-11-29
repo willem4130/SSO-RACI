@@ -6,9 +6,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production'
 const SESSION_COOKIE_NAME = 'raci-session'
 const SESSION_EXPIRY = '7d' // 7 days
 
-// Auth bypass - provides a mock user for testing without auth
-// Set BYPASS_AUTH=true to skip authentication (useful for demos)
-const BYPASS_AUTH = process.env.BYPASS_AUTH?.trim() === 'true' || process.env.NODE_ENV === 'development'
+// Auth bypass - ALWAYS enabled for public demo
+// This allows anyone to access the app without login
+const BYPASS_AUTH = true // Always bypass authentication
 const MOCK_USER: SessionUser = {
   id: 'demo-user-001',
   email: 'demo@raci.app',
