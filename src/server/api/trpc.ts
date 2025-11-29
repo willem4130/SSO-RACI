@@ -10,9 +10,29 @@ import { getSessionFromCookie } from '@/server/auth/session'
 
 /**
  * Creates the context for incoming requests
+ * If BYPASS_AUTH is enabled, ensures demo user exists in database
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await getSessionFromCookie()
+
+  // If using BYPASS_AUTH, ensure the mock user exists in database
+  if (session && process.env.BYPASS_AUTH === 'true') {
+    try {
+      await db.user.upsert({
+        where: { id: session.id },
+        update: {},
+        create: {
+          id: session.id,
+          email: session.email,
+          name: session.name,
+          password: 'bypass-auth-no-password',
+        },
+      })
+    } catch (error) {
+      // Ignore errors - user might already exist
+      console.log('BYPASS_AUTH: User sync skipped', error)
+    }
+  }
 
   return {
     db,
