@@ -259,27 +259,57 @@ npx shadcn@latest add toast
 
 ## 🚢 Deployment
 
-### Deploy to Vercel (Recommended)
+### Quick Deploy to Vercel
 
-1. Push to GitHub
-2. Import project on [Vercel](https://vercel.com)
-3. Add environment variables
-4. Deploy!
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
 
-Vercel will auto-detect Next.js and configure:
-- ✅ Analytics (automatic)
-- ✅ Speed Insights (automatic)
-- ✅ Edge Functions
+**Complete Deployment Guide**: See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+
+### Quick Steps
+
+1. **Push to GitHub**
+   ```bash
+   git push origin main
+   ```
+
+2. **Import to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Add New Project"
+   - Import your GitHub repository
+
+3. **Set Environment Variables** (required)
+   ```bash
+   DATABASE_URL="postgresql://..."
+   DIRECT_URL="postgresql://..."
+   NODE_ENV="production"
+   ```
+
+4. **Deploy!**
+   - Vercel auto-detects Next.js configuration
+   - Build command: `prisma generate && next build` (pre-configured)
+   - Every push to `main` auto-deploys to production
+   - Pull requests create preview deployments
+
+### What's Included
+
+Vercel automatically configures:
+- ✅ Analytics (privacy-friendly)
+- ✅ Speed Insights
+- ✅ Edge Functions for API routes
 - ✅ Serverless Functions
+- ✅ Automatic HTTPS
+- ✅ Global CDN
+- ✅ Preview deployments for PRs
 
-### Environment Variables for Production
+### Production Checklist
 
-Don't forget to add in Vercel dashboard:
-- `DATABASE_URL`
-- `DIRECT_URL`
-- `NEXT_PUBLIC_SENTRY_DSN`
-- `SENTRY_AUTH_TOKEN`
-- Other optional vars
+- [ ] Database configured (PostgreSQL recommended)
+- [ ] Environment variables set in Vercel
+- [ ] Upstash Redis for rate limiting (optional but recommended)
+- [ ] Sentry for error tracking (optional)
+- [ ] Custom domain configured (optional)
+
+**Full deployment guide with troubleshooting**: [DEPLOYMENT.md](./DEPLOYMENT.md)
 
 ## 🤝 Contributing
 
