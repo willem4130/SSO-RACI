@@ -16,7 +16,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
   const session = await getSessionFromCookie()
 
   // If using BYPASS_AUTH, ensure the mock user exists in database
-  if (session && process.env.BYPASS_AUTH === 'true') {
+  if (session && process.env.BYPASS_AUTH?.trim() === 'true') {
     try {
       await db.user.upsert({
         where: { id: session.id },

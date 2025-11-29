@@ -8,7 +8,7 @@ const SESSION_EXPIRY = '7d' // 7 days
 
 // Auth bypass - provides a mock user for testing without auth
 // Set BYPASS_AUTH=true to skip authentication (useful for demos)
-const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true' || process.env.NODE_ENV === 'development'
+const BYPASS_AUTH = process.env.BYPASS_AUTH?.trim() === 'true' || process.env.NODE_ENV === 'development'
 const MOCK_USER: SessionUser = {
   id: 'demo-user-001',
   email: 'demo@raci.app',
