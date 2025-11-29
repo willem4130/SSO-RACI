@@ -6,13 +6,14 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('🌱 Starting database seed...')
 
-  // Create test user
+  // Create test user with fixed ID to match BYPASS_AUTH mock user
   const hashedPassword = await bcrypt.hash('password123', 10)
 
   const user = await prisma.user.upsert({
     where: { email: 'demo@raci.app' },
     update: {},
     create: {
+      id: 'demo-user-001', // Fixed ID to match session.ts MOCK_USER
       email: 'demo@raci.app',
       name: 'Demo User',
       password: hashedPassword,
